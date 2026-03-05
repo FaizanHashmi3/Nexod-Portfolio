@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+.dot {
+
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  margin: 20px 0;
+
+}
+
+.client-logo {
+
+  width: 80px;
+  height: 80px;
+
+  background: white;
+
+  border-radius: 16px;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+
+}
+
+body {
+  background: #0a0a0a;
+  color: #ffffff;
+  font-family: var(--font-geist-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.section-light {
+  background: #ffffff;
+  color: #000000;
+}
+
+.section-dark {
+  background: #0a0a0a;
+  color: #ffffff;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}

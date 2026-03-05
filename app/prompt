@@ -1,0 +1,2910 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import gsap from "@/lib/gsap";
+
+export default function Hero() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const badgeRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const subRef = useRef<HTMLParagraphElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Kill any lingering tweens on these elements before re-running
+    // so animations replay on every page visit (not just first mount)
+    const allTargets = [
+      badgeRef.current,
+      headingRef.current?.querySelectorAll(".h-line"),
+      subRef.current,
+      ctaRef.current?.querySelectorAll("button"),
+      statsRef.current?.querySelectorAll(".stat-block"),
+      statsRef.current?.querySelectorAll(".stat-divider"),
+    ];
+    allTargets.forEach((t) => t && gsap.killTweensOf(t));
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power4.out" }, delay: 0.1 });
+
+      // ── Badge: slide down + fade ──────────────────────────────────────────
+      gsap.set(badgeRef.current, { y: -16, opacity: 0 });
+      tl.to(badgeRef.current, { y: 0, opacity: 1, duration: 0.7 }, 0);
+
+      // ── Heading: 3D flip per LINE ─────────────────────────────────────────
+      const lines = headingRef.current?.querySelectorAll<HTMLElement>(".h-line");
+      if (lines?.length) {
+        gsap.set(lines, {
+          rotateX: 90,
+          y: 40,
+          opacity: 0,
+          transformOrigin: "bottom center",
+        });
+        tl.to(
+          lines,
+          {
+            rotateX: 0,
+            y: 0,
+            opacity: 1,
+            duration: 1.05,
+            stagger: 0.1,
+            ease: "power4.out",
+          },
+          0.18
+        );
+      }
+
+      // ── Subtext: clip-path wipe left→right ───────────────────────────────
+      gsap.set(subRef.current, { clipPath: "inset(0 100% 0 0)", opacity: 1 });
+      tl.to(
+        subRef.current,
+        {
+          clipPath: "inset(0 0% 0 0)",
+          duration: 1.1,
+          ease: "power3.inOut",
+        },
+        0.55
+      );
+
+      // ── CTA buttons: fade + rise stagger ─────────────────────────────────
+      const btns = ctaRef.current?.querySelectorAll<HTMLElement>("button");
+      if (btns?.length) {
+        gsap.set(btns, { y: 24, opacity: 0 });
+        tl.to(btns, { y: 0, opacity: 1, duration: 0.75, stagger: 0.12 }, 0.7);
+      }
+
+      // ── Stats: fade + rise, then counter tick ────────────────────────────
+      const statEls =
+        statsRef.current?.querySelectorAll<HTMLElement>(".stat-block");
+      const dividers =
+        statsRef.current?.querySelectorAll<HTMLElement>(".stat-divider");
+
+      if (statEls?.length) {
+        gsap.set(statEls, { y: 20, opacity: 0 });
+        gsap.set(dividers ?? [], {
+          scaleY: 0,
+          transformOrigin: "top center",
+        });
+
+        tl.to(
+          statEls,
+          { y: 0, opacity: 1, duration: 0.7, stagger: 0.1 },
+          0.85
+        );
+        tl.to(
+          dividers ?? [],
+          { scaleY: 1, duration: 0.5, stagger: 0.08 },
+          0.9
+        );
+
+        // Number count-up — fixed: use closure variable instead of `this`
+        statEls.forEach((el) => {
+          const numEl = el.querySelector<HTMLElement>(".stat-num");
+          if (!numEl) return;
+
+          const raw = numEl.dataset.value ?? "0";
+          const suffix = raw.replace(/[\d.]/g, "");
+          const target = parseFloat(raw);
+          if (!isFinite(target)) return;
+
+          // Reset display to "0" so it counts from scratch on every visit
+          numEl.textContent = "0" + suffix;
+
+          const counter = { val: 0 };
+          tl.to(
+            counter,
+            {
+              val: target,
+              duration: 1.4,
+              ease: "power2.out",
+              onUpdate() {
+                numEl.textContent =
+                  (Number.isInteger(target)
+                    ? Math.round(counter.val)
+                    : counter.val.toFixed(1)) + suffix;
+              },
+            },
+            1.05
+          );
+        });
+      }
+    }, sectionRef);
+
+    // Cleanup: revert context when component unmounts or effect re-runs
+    return () => ctx.revert();
+  }, []); // empty deps → runs on every mount (every page visit in Next.js app router)
+
+  return (
+    <section
+      ref={sectionRef}
+      id="hero"
+      className="relative min-h-screen bg-white flex items-center py-26"
+    >
+      <div className="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 md:grid-cols-2 items-center gap-16">
+
+        {/* LEFT CONTENT */}
+        <div className="relative">
+
+          {/* BADGE */}
+          <div
+            ref={badgeRef}
+            className="inline-flex items-center mb-5 px-4 py-1.5 rounded-full border border-gray-200 text-sm text-gray-400 tracking-wide"
+          >
+            AI-Native Product &amp; Growth Studio
+          </div>
+
+          {/* HEADING */}
+          <h1
+            ref={headingRef}
+            className="text-6xl md:text-7xl lg:text-7xl font-black tracking-tight leading-[0.95] mb-7"
+            style={{ perspective: "900px" }}
+          >
+            {[
+              <>We Turn</>,
+              <>Complex Ideas</>,
+              <>
+                Into{" "}
+                <span
+                  id="hero-dot-target-2"
+                  className="bg-gradient-to-r from-green-500 via-blue-500 to-red-500 text-transparent bg-clip-text"
+                >
+                  Intelligent
+                </span>
+              </>,
+              <>
+                <span className="bg-gradient-to-r from-green-500 via-blue-500 to-red-500 text-transparent bg-clip-text">
+                  Systems
+                </span>
+              </>,
+            ].map((content, i) => (
+              <span key={i} style={{ overflow: "hidden", display: "block" }}>
+                <span className="h-line" style={{ display: "block" }}>
+                  {content}
+                </span>
+              </span>
+            ))}
+          </h1>
+
+          {/* SUBTEXT */}
+          <p
+            ref={subRef}
+            id="hero-dot-target-1"
+            className="text-base md:text-lg text-black-400 max-w-md mb-10 leading-relaxed"
+          >
+            Designing AI platforms, automation infrastructure, and scalable
+            digital products for companies building the future.
+          </p>
+
+          {/* CTA */}
+          <div ref={ctaRef} className="flex gap-3 mb-14">
+            {/* Primary Button */}
+            <button
+              id="hero-dot-target-3"
+              className="px-7 py-3.5 bg-black text-white rounded-full text-sm font-medium hover:scale-105 transition-transform duration-300 ease-in-out cursor-pointer"
+            >
+              Start a Project →
+            </button>
+
+            {/* Outline Button */}
+            <button className="relative overflow-hidden px-7 py-3.5 border border-gray-200 rounded-full text-sm font-medium transition-colors duration-300 group cursor-pointer">
+              <span className="absolute inset-0 rounded-full bg-black scale-y-0 origin-bottom transition-transform duration-500 ease-in-out group-hover:scale-y-100" />
+              <span className="relative z-10 transition-colors duration-300 group-hover:text-white">
+                See How It Works
+              </span>
+            </button>
+          </div>
+
+          {/* STATS */}
+          <div
+            ref={statsRef}
+            className="flex items-center gap-8 pt-8 border-t border-gray-100"
+          >
+            <Stat number="50+" label="Projects" />
+            <div className="stat-divider w-px h-7 bg-gray-200" />
+            <Stat number="30+" label="Companies" />
+            <div className="stat-divider w-px h-7 bg-gray-200" />
+            <Stat number="96%" label="Retention" />
+            <div className="stat-divider w-px h-7 bg-gray-200" />
+            <Stat number="3x" label="ROI" />
+          </div>
+        </div>
+
+        {/* RIGHT SIDE EMPTY — SPHERE SPACE */}
+        <div />
+      </div>
+    </section>
+  );
+}
+
+function Stat({ number, label }: { number: string; label: string }) {
+  return (
+    <div className="stat-block">
+      <div className="stat-num text-xl font-bold mb-0.5" data-value={number}>
+        {number}
+      </div>
+      <div className="text-xs text-gray-400 tracking-widest uppercase">
+        {label}
+      </div>
+    </div>
+  );
+}
+.
+"use client";
+
+import { useEffect, useRef } from "react";
+import gsap from "../../lib/gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
+
+const STEPS = [
+    {
+        id: 1,
+        color: "#22c55e",
+        title: "Discover",
+        points: [
+            "Business Model Analysis",
+            "Bottleneck Identification",
+            "AI Leverage Mapping",
+            "Competitive Gap Review",
+        ],
+    },
+    {
+        id: 2,
+        color: "#3b82f6",
+        title: "Design",
+        points: [
+            "Scalable System Blueprints",
+            "Seamless UX Architecture",
+            "Growth-Aligned Strategy",
+            "Integration Spec Definition",
+        ],
+    },
+    {
+        id: 3,
+        color: "#ef4444",
+        title: "Build",
+        points: [
+            "Production-Ready Platforms",
+            "Real-World Testing",
+            "Scalable Deployment",
+            "Continuous Optimisation",
+        ],
+    },
+];
+
+// Total scroll length = 3 steps × this multiplier of viewport height
+const SCROLL_PER_STEP = 1.1;
+
+export default function Process() {
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const stickyRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const wrapper = wrapperRef.current;
+        const sticky = stickyRef.current;
+        if (!wrapper || !sticky) return;
+
+        const ctx = gsap.context(() => {
+
+            // ── Header reveal ─────────────────────────────────────────────────────
+            const labelLine = document.querySelector<HTMLElement>(".proc-label-line");
+            const labelText = document.querySelector<HTMLElement>(".proc-label-text");
+            const headingWords = document.querySelectorAll<HTMLElement>(".proc-h-word");
+            const subtext = document.querySelector<HTMLElement>(".proc-subtext");
+
+            if (labelLine && labelText) {
+                gsap.set(labelLine, { scaleX: 0, transformOrigin: "left center" });
+                gsap.set(labelText, { opacity: 0, x: -10 });
+                gsap.timeline({
+                    scrollTrigger: { trigger: labelLine, start: "top 88%", toggleActions: "play none none reset" },
+                })
+                    .to(labelLine, { scaleX: 1, duration: 0.5, ease: "power3.inOut" })
+                    .to(labelText, { opacity: 1, x: 0, duration: 0.45 }, "-=0.15");
+            }
+
+            if (headingWords.length) {
+                gsap.set(headingWords, { rotateX: 88, y: 32, opacity: 0, transformOrigin: "bottom center" });
+                gsap.to(headingWords, {
+                    rotateX: 0, y: 0, opacity: 1, duration: 0.95, ease: "power4.out", stagger: 0.065,
+                    scrollTrigger: { trigger: headingWords[0], start: "top 85%", toggleActions: "play none none reset" },
+                });
+            }
+
+            if (subtext) {
+                gsap.set(subtext, { clipPath: "inset(0 100% 0 0)", opacity: 1 });
+                gsap.to(subtext, {
+                    clipPath: "inset(0 0% 0 0)", duration: 1.1, ease: "power3.inOut",
+                    scrollTrigger: { trigger: subtext, start: "top 88%", toggleActions: "play none none reset" },
+                });
+            }
+
+            // ── Gather step DOM nodes ─────────────────────────────────────────────
+            const titleEls = STEPS.map((s) => sticky.querySelector<HTMLElement>(`#ptitle-${s.id}`));
+            const descEls = STEPS.map((s) => sticky.querySelector<HTMLElement>(`#pdesc-${s.id}`));
+            const visualEls = STEPS.map((s) => sticky.querySelector<HTMLElement>(`#pvisual-${s.id}`));
+
+            // ── Initial states ────────────────────────────────────────────────────
+            // Titles: all visible at start
+            gsap.set(titleEls[0], { y: 0, opacity: 1 });
+            gsap.set(titleEls[1], { y: 0, opacity: 1 });
+            gsap.set(titleEls[2], { y: 0, opacity: 1 });
+            // Descriptions: collapsed
+            descEls.forEach((el) => el && gsap.set(el, { height: 0, opacity: 0, overflow: "hidden" }));
+            // Visuals: hidden
+            visualEls.forEach((el) => el && gsap.set(el, { opacity: 0, y: 24 }));
+
+            // ── PIN the sticky panel ──────────────────────────────────────────────
+            // stepOffset (1vh titles-only) + 3 steps × SCROLL_PER_STEP × vh
+            const totalScroll = window.innerHeight + window.innerHeight * SCROLL_PER_STEP * STEPS.length;
+
+            ScrollTrigger.create({
+                trigger: wrapper,
+                start: "top top",
+                end: `+=${totalScroll}`,
+                pin: sticky,
+                pinSpacing: true,
+                anticipatePin: 1,
+            });
+
+            // ── Helper: reset to titles-only (Phase 0) ───────────────────────────
+            // All 3 titles visible, no descriptions, no visuals
+            function showTitlesOnly() {
+                titleEls.forEach((el) => el && gsap.to(el, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out", overwrite: true }));
+                descEls.forEach((el) => el && gsap.to(el, { height: 0, opacity: 0, duration: 0.3, ease: "power2.in", overwrite: true }));
+                visualEls.forEach((el) => el && gsap.to(el, { opacity: 0, y: 24, duration: 0.3, ease: "power2.in", overwrite: true }));
+            }
+
+            // ── Helper: activate a step (Phase 1–3) ──────────────────────────────
+            function showStep(i: number) {
+                // Visuals: crossfade
+                visualEls.forEach((el, vi) => {
+                    if (!el) return;
+                    if (vi === i) gsap.to(el, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out", overwrite: true });
+                    else gsap.to(el, { opacity: 0, y: vi < i ? -24 : 24, duration: 0.35, ease: "power2.in", overwrite: true });
+                });
+
+                // Descriptions: open active only, collapse rest
+                descEls.forEach((el, di) => {
+                    if (!el) return;
+                    if (di === i) gsap.to(el, { height: "auto", opacity: 1, duration: 0.55, ease: "power3.out", overwrite: true });
+                    else gsap.to(el, { height: 0, opacity: 0, duration: 0.35, ease: "power2.in", overwrite: true });
+                });
+
+                // Titles: active + all below visible, above ones float away
+                titleEls.forEach((el, ti) => {
+                    if (!el) return;
+                    if (ti < i) gsap.to(el, { y: -60, opacity: 0, duration: 0.4, ease: "power2.in", overwrite: true });
+                    else gsap.to(el, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out", overwrite: true });
+                });
+            }
+
+            // ── ScrollTrigger: Phase 0 — titles only (before any step scroll) ─────
+            // Step triggers start at +1 viewport offset so there's a full scroll
+            // window where only titles are visible
+            const stepOffset = window.innerHeight; // 1vh gap before step-1 fires
+
+            ScrollTrigger.create({
+                trigger: wrapper,
+                start: "top top",
+                end: `+=${stepOffset - 10}`,
+                onEnter: () => showTitlesOnly(),
+                onEnterBack: () => showTitlesOnly(),
+            });
+
+            // ── ScrollTrigger per step — each step gets SCROLL_PER_STEP × vh ─────
+            STEPS.forEach((_, i) => {
+                ScrollTrigger.create({
+                    trigger: wrapper,
+                    start: `top+=${stepOffset + window.innerHeight * SCROLL_PER_STEP * i} top`,
+                    end: `top+=${stepOffset + window.innerHeight * SCROLL_PER_STEP * (i + 1)} top`,
+                    onEnter: () => showStep(i),
+                    onEnterBack: () => showStep(i),
+                });
+            });
+
+        }, wrapper);
+
+        return () => ctx.revert();
+    }, []);
+
+    return (
+        <section id="process" style={{ background: "#fff" }}>
+
+            {/* ── HEADER (scrolls naturally) ─────────────────────────────────────── */}
+            <div style={{ maxWidth: 1280, margin: "0 auto", padding: "160px 48px 80px" }}>
+                <div style={{ maxWidth: 680 }}>
+
+                    <div style={{
+                        display: "inline-flex", alignItems: "center", gap: 10,
+                        fontSize: 11, fontWeight: 600, letterSpacing: "0.22em",
+                        textTransform: "uppercase", color: "rgba(0,0,0,0.35)", marginBottom: 32,
+                    }}>
+                        <span className="proc-label-line" style={{ display: "block", width: 24, height: 1, background: "currentColor", flexShrink: 0 }} />
+                        <span className="proc-label-text">Process</span>
+                    </div>
+
+                    <h2 style={{
+                        fontSize: "clamp(52px,6vw,80px)", fontWeight: 700,
+                        letterSpacing: "-0.04em", lineHeight: 1.02, color: "#0a0a0a",
+                        margin: 0, perspective: "800px",
+                    }}>
+                        {["From Vision", "To Deployment"].map((line, li) => (
+                            <span key={li} style={{ display: "block" }}>
+                                {line.split(" ").map((word, wi) => (
+                                    <span key={wi} style={{ overflow: "hidden", display: "inline-block", marginRight: "0.26em" }}>
+                                        <span className="proc-h-word" style={{ display: "inline-block" }}>{word}</span>
+                                    </span>
+                                ))}
+                            </span>
+                        ))}
+                    </h2>
+
+                    <p className="proc-subtext" style={{
+                        fontSize: 17, lineHeight: 1.8, color: "#000",
+                        maxWidth: 480, margin: "32px 0 0 0", fontWeight: 400,
+                    }}>
+                        A structured execution framework designed to transform complex ideas
+                        into scalable intelligent systems.
+                    </p>
+                </div>
+            </div>
+
+            {/* ── SCROLL DRIVER ─────────────────────────────────────────────────── */}
+            <div ref={wrapperRef}>
+
+                {/* STICKY PANEL — pinned by GSAP */}
+                <div
+                    ref={stickyRef}
+                    style={{
+                        width: "100%",
+                        height: "100vh",
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 80,
+                        alignItems: "center",
+                        maxWidth: 1280,
+                        margin: "0 auto",
+                        padding: "0 48px",
+                        boxSizing: "border-box",
+                    }}
+                >
+
+                    {/* LEFT — all step titles + collapsible descriptions */}
+                    <div style={{ position: "relative" }}>
+                        {STEPS.map((step) => (
+                            <div key={step.id}>
+
+                                {/* Title row */}
+                                <div
+                                    id={`ptitle-${step.id}`}
+                                    style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 4 }}
+                                >
+                                    <AnimatedBullet color={step.color} />
+                                    <h3 style={{
+                                        fontSize: "clamp(44px,4.2vw,60px)", fontWeight: 900,
+                                        letterSpacing: "-0.03em", lineHeight: 1,
+                                        color: "#0a0a0a", margin: 0,
+                                    }}>
+                                        {step.title}
+                                    </h3>
+                                </div>
+
+                                {/* Collapsible description */}
+                                <div id={`pdesc-${step.id}`} style={{ overflow: "hidden", height: 0, opacity: 0 }}>
+                                    <div style={{ height: 1, background: "rgba(0,0,0,0.07)", margin: "22px 0 22px 68px" }} />
+                                    <ul style={{
+                                        listStyle: "none", margin: 0, padding: "0 0 28px 68px",
+                                        display: "flex", flexDirection: "column", gap: 14,
+                                    }}>
+                                        {step.points.map((point, pi) => (
+                                            <li key={pi} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                                                <span style={{
+                                                    flexShrink: 0, width: 5, height: 5,
+                                                    borderRadius: "50%", background: step.color,
+                                                }} />
+                                                <span style={{ fontSize: 16, lineHeight: 1.65, color: "rgba(0,0,0,0.62)", fontWeight: 400 }}>
+                                                    {point}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* RIGHT — overlapping visuals */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ position: "relative", width: 460, height: 460 }}>
+                            {STEPS.map((step) => (
+                                <div
+                                    key={step.id}
+                                    id={`pvisual-${step.id}`}
+                                    style={{
+                                        position: "absolute", inset: 0,
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        opacity: 0,
+                                    }}
+                                >
+                                    {step.id === 1 && <ResearchMappingSVG />}
+                                    {step.id === 2 && <SystemArchitectureSVG />}
+                                    {step.id === 3 && <DeploymentInfrastructureSVG />}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    );
+}
+
+/* ─────────────────────────────────────────────
+   Animated Bullet
+───────────────────────────────────────────── */
+function AnimatedBullet({ color }: { color: string }) {
+    const uid = color.replace("#", "");
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 36 36" style={{ flexShrink: 0 }}>
+            <style>{`
+        @keyframes spin-ring-${uid}{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        .ring-${uid}{transform-origin:18px 18px;animation:spin-ring-${uid} 2.8s linear infinite}
+      `}</style>
+            <circle className={`ring-${uid}`} cx="18" cy="18" r="18"
+                fill="none" stroke="#000" strokeWidth="1.5" strokeDasharray="3.5 4.5" opacity="0.6" />
+            <circle cx="18" cy="18" r="14" fill={color} />
+        </svg>
+    );
+}
+
+/* ─────────────────────────────────────────────
+   SVG 1 — Research Mapping
+───────────────────────────────────────────── */
+function ResearchMappingSVG() {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="320" height="320">
+            <style>{`
+        @keyframes pulse-node-r{0%,100%{r:6;opacity:1}50%{r:9;opacity:.7}}
+        @keyframes pulse-ctr-r{0%,100%{r:14;opacity:1}50%{r:18;opacity:.75}}
+        @keyframes draw-edge-r{from{stroke-dashoffset:120}to{stroke-dashoffset:0}}
+        @keyframes orbit-r{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes fid-r{0%{opacity:0;transform:scale(0)}60%{opacity:1;transform:scale(1.2)}100%{opacity:1;transform:scale(1)}}
+        .re{stroke:#011736;stroke-width:1;fill:none;stroke-dasharray:120;animation:draw-edge-r 1.2s ease forwards}
+        .re2{animation-delay:.2s;stroke-dashoffset:120}.re3{animation-delay:.4s;stroke-dashoffset:120}
+        .re4{animation-delay:.6s;stroke-dashoffset:120}.re5{animation-delay:.8s;stroke-dashoffset:120}
+        .rn{fill:#fff;stroke:#011736;stroke-width:1;animation:pulse-node-r 2.4s ease-in-out infinite}
+        .rn2{animation-delay:.4s}.rn3{animation-delay:.8s}.rn4{animation-delay:1.2s}.rn5{animation-delay:1.6s}
+        .rc{fill:#7202BB;animation:pulse-ctr-r 2s ease-in-out infinite}
+        .rl{fill:#011736;font-size:7px;font-family:sans-serif;opacity:0;animation:fid-r .5s ease forwards}
+        .rl2{animation-delay:.6s}.rl3{animation-delay:1s}.rl4{animation-delay:1.4s}
+        .ro{fill:none;stroke:#011736;stroke-width:.5;stroke-dasharray:3 4;opacity:.25;transform-origin:110px 110px;animation:orbit-r 18s linear infinite}
+        .ro2{animation-direction:reverse;animation-duration:28s}
+      `}</style>
+            <circle className="ro" cx="110" cy="110" r="72" />
+            <circle className="ro ro2" cx="110" cy="110" r="50" />
+            <line className="re" x1="110" y1="110" x2="60" y2="60" />
+            <line className="re re2" x1="110" y1="110" x2="165" y2="72" />
+            <line className="re re3" x1="110" y1="110" x2="170" y2="148" />
+            <line className="re re4" x1="110" y1="110" x2="68" y2="155" />
+            <line className="re re5" x1="110" y1="110" x2="48" y2="120" />
+            <line className="re re3" x1="60" y1="60" x2="165" y2="72" strokeOpacity=".3" />
+            <line className="re re4" x1="165" y1="72" x2="170" y2="148" strokeOpacity=".3" />
+            <circle className="rn" cx="60" cy="60" r="6" />
+            <circle className="rn rn2" cx="165" cy="72" r="6" />
+            <circle className="rn rn3" cx="170" cy="148" r="6" />
+            <circle className="rn rn4" cx="68" cy="155" r="6" />
+            <circle className="rn rn5" cx="48" cy="120" r="5" />
+            <circle cx="165" cy="72" r="2.5" fill="#7202BB" opacity="0" style={{ animation: "fid-r .5s .9s ease forwards" }} />
+            <circle cx="170" cy="148" r="2.5" fill="#7202BB" opacity="0" style={{ animation: "fid-r .5s 1.5s ease forwards" }} />
+            <circle className="rc" cx="110" cy="110" r="14" />
+            <circle cx="110" cy="110" r="14" fill="none" stroke="#011736" strokeWidth="1" />
+            <line x1="104" y1="110" x2="116" y2="110" stroke="#fff" strokeWidth="1.5" />
+            <line x1="110" y1="104" x2="110" y2="116" stroke="#fff" strokeWidth="1.5" />
+            <text className="rl" x="50" y="56" textAnchor="middle">USER</text>
+            <text className="rl rl2" x="174" y="68" textAnchor="start">DATA</text>
+            <text className="rl rl3" x="174" y="153" textAnchor="start">FLOW</text>
+            <text className="rl rl4" x="58" y="168" textAnchor="middle">GAP</text>
+        </svg>
+    );
+}
+
+/* ─────────────────────────────────────────────
+   SVG 2 — System Architecture
+───────────────────────────────────────────── */
+function SystemArchitectureSVG() {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="320" height="320">
+            <style>{`
+        @keyframes dbox-a{from{stroke-dashoffset:200;opacity:0}to{stroke-dashoffset:0;opacity:1}}
+        @keyframes farr-a{0%{stroke-dashoffset:40;opacity:0}30%{opacity:1}100%{stroke-dashoffset:0;opacity:1}}
+        @keyframes bdot-a{0%,80%,100%{opacity:1}40%{opacity:.2}}
+        .ab{fill:#fff;stroke:#011736;stroke-width:1;stroke-dasharray:200;animation:dbox-a .8s ease forwards;opacity:0}
+        .ab2{animation-delay:.3s}.ab3{animation-delay:.6s}.ab4{animation-delay:.9s}
+        .ac{fill:#7202BB;stroke:none;opacity:0;animation:dbox-a .5s ease forwards}
+        .ac2{animation-delay:.5s}.ac3{animation-delay:.8s}.ac4{animation-delay:1.1s}
+        .aa{fill:none;stroke:#011736;stroke-width:1;stroke-dasharray:40;animation:farr-a .6s ease forwards;opacity:0}
+        .aa2{animation-delay:.5s}.aa3{animation-delay:.8s}.aa4{animation-delay:1.1s}
+        .al{fill:#011736;font-size:6.5px;font-family:monospace;opacity:0;animation:dbox-a .4s ease forwards}
+        .al2{animation-delay:.4s}.al3{animation-delay:.7s}.al4{animation-delay:1s}
+        .ad{fill:#7202BB;animation:bdot-a 1.8s ease-in-out infinite}
+        .ad2{animation-delay:.6s}.ad3{animation-delay:1.2s}
+        .ag{stroke:#011736;stroke-width:.3;opacity:.08}
+      `}</style>
+            {[40, 60, 80, 100, 120, 140, 160, 180].map(x => <line key={`v${x}`} className="ag" x1={x} y1="20" x2={x} y2="200" />)}
+            {[40, 60, 80, 100, 120, 140, 160, 180].map(y => <line key={`h${y}`} className="ag" x1="20" y1={y} x2="200" y2={y} />)}
+            <rect className="ab" x="28" y="38" width="60" height="32" rx="3" />
+            <rect className="ac" x="28" y="38" width="4" height="32" rx="1" />
+            <text className="al" x="40" y="52">INPUT</text>
+            <rect className="ab ab2" x="132" y="38" width="60" height="32" rx="3" />
+            <rect className="ac ac2" x="132" y="38" width="4" height="32" rx="1" />
+            <text className="al al2" x="144" y="52">PROCESS</text>
+            <path className="aa" d="M88,54 L132,54" markerEnd="url(#arra)" />
+            <rect className="ab ab3" x="80" y="100" width="60" height="32" rx="3" />
+            <rect className="ac ac3" x="80" y="100" width="60" height="4" rx="1" />
+            <text className="al al3" x="92" y="116">ORCHESTRATE</text>
+            <path className="aa aa2" d="M162,70 L162,86 Q162,96 152,100" markerEnd="url(#arra)" />
+            <path className="aa aa3" d="M58,70 L58,86 Q58,96 80,113" markerEnd="url(#arra)" />
+            <rect className="ab ab4" x="80" y="158" width="60" height="30" rx="3" />
+            <rect className="ac ac4" x="80" y="158" width="60" height="4" rx="1" />
+            <text className="al al4" x="93" y="173">OUTPUT</text>
+            <path className="aa aa4" d="M110,132 L110,158" markerEnd="url(#arra)" />
+            <circle className="ad" cx="183" cy="42" r="3" />
+            <circle className="ad ad2" cx="183" cy="54" r="3" />
+            <circle className="ad ad3" cx="183" cy="66" r="3" />
+            <defs>
+                <marker id="arra" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3 Z" fill="#011736" />
+                </marker>
+            </defs>
+        </svg>
+    );
+}
+
+/* ─────────────────────────────────────────────
+   SVG 3 — Deployment Infrastructure
+───────────────────────────────────────────── */
+function DeploymentInfrastructureSVG() {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="320" height="320">
+            <style>{`
+        @keyframes rbar-d{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+        @keyframes ssrv-d{from{transform:translateX(-30px);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes ping-d{0%,100%{r:3;opacity:1}50%{r:5;opacity:.5}}
+        @keyframes dln-d{0%{stroke-dashoffset:80}100%{stroke-dashoffset:0}}
+        @keyframes cup-d{from{opacity:0}to{opacity:1}}
+        .db{fill:#011736;transform-box:fill-box;transform-origin:bottom;transform:scaleY(0);animation:rbar-d .7s cubic-bezier(.34,1.56,.64,1) forwards}
+        .db2{animation-delay:.15s}.db3{animation-delay:.3s;fill:#7202BB}.db4{animation-delay:.45s}.db5{animation-delay:.6s;fill:#7202BB}.db6{animation-delay:.75s}
+        .ds{fill:#fff;stroke:#011736;stroke-width:1;opacity:0;animation:ssrv-d .5s ease forwards}
+        .ds2{animation-delay:.4s}.ds3{animation-delay:.7s}
+        .dl{fill:#7202BB;animation:ping-d 1.6s ease-in-out infinite}
+        .dl2{animation-delay:.5s}.dl3{animation-delay:1.1s;opacity:.5}
+        .dp{fill:none;stroke:#7202BB;stroke-width:1.5;stroke-dasharray:80;stroke-dashoffset:80;animation:dln-d 1s ease 1.2s forwards}
+        .dlb{fill:#011736;font-size:6px;font-family:monospace;opacity:0;animation:cup-d .3s ease forwards}
+        .dlb2{animation-delay:.8s}.dlb3{animation-delay:1.3s}
+        .dax{stroke:#011736;stroke-width:.8;opacity:.4}
+      `}</style>
+            <rect className="ds" x="22" y="68" width="50" height="14" rx="2" />
+            <rect className="ds ds2" x="22" y="86" width="50" height="14" rx="2" />
+            <rect className="ds ds3" x="22" y="104" width="50" height="14" rx="2" />
+            <circle className="dl" cx="30" cy="75" r="3" />
+            <circle className="dl dl2" cx="30" cy="93" r="3" />
+            <circle className="dl dl3" cx="30" cy="111" r="3" />
+            {[75, 93, 111].map((y, i) => <rect key={i} x="36" y={y - 2} width={24 - i * 4} height="4" rx="1" fill="#011736" opacity="0.15" />)}
+            <text className="dlb" x="22" y="63">SRV-01</text>
+            <text className="dlb dlb2" x="22" y="130">SRV-02</text>
+            <path className="dp" d="M72,91 Q100,91 108,130" />
+            <line className="dax" x1="108" y1="128" x2="200" y2="128" />
+            <line className="dax" x1="108" y1="60" x2="108" y2="128" />
+            <rect className="db" x="114" y="98" width="10" height="30" />
+            <rect className="db db2" x="128" y="88" width="10" height="40" />
+            <rect className="db db3" x="142" y="78" width="10" height="50" />
+            <rect className="db db4" x="156" y="92" width="10" height="36" />
+            <rect className="db db5" x="170" y="68" width="10" height="60" />
+            <rect className="db db6" x="184" y="82" width="10" height="46" />
+            <polyline points="119,98 133,88 147,78 161,92 175,68 189,72" fill="none" stroke="#7202BB" strokeWidth="1.5"
+                strokeDasharray="100" strokeDashoffset="100" style={{ animation: "dln-d 1s ease 1.5s forwards" }} />
+            <text className="dlb dlb3" x="108" y="140">DEPLOY CYCLES</text>
+            <text x="170" y="62" fill="#7202BB" fontSize="7" fontFamily="monospace" opacity="0"
+                style={{ animation: "cup-d .3s 2s ease forwards" }}>▲ 98%</text>
+            <circle cx="189" cy="72" r="4" fill="#7202BB" opacity="0"
+                style={{ animation: "ping-d 2s 2.2s ease-in-out infinite" }} />
+        </svg>
+    );
+}
+.
+"use client";
+
+import { useEffect, useRef, ReactNode, CSSProperties, useState } from "react";
+import gsap from "@/lib/gsap";
+import { ScrollTrigger } from "@/lib/gsap";
+
+// ── Card data type ───────────────────────────────────────────────────────────
+interface CardData {
+    color: string;
+    number: string;
+    title: string;
+    subtitle: string;
+    description: string;
+    icon: ReactNode;
+}
+
+const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+
+// How much of the card must exit the top before draining (0–100).
+// e.g. 80 = drain when 80% of card has scrolled above the viewport.
+const CARD_DRAIN_EXIT_PERCENT = 50;
+const CARD_DRAIN_TRIGGER = `bottom ${100 - CARD_DRAIN_EXIT_PERCENT}%`;
+
+const CARDS: CardData[] = [
+    {
+        color: "#ef4444",
+        number: "01",
+        title: "AI Platforms",
+        subtitle: "Intelligent by Design",
+        description:
+            "End-to-end AI systems built for production — from model selection to deployment pipelines that scale without friction.",
+        icon: (
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <rect x="8" y="16" width="32" height="22" rx="4" stroke="currentColor" strokeWidth="2.5" />
+                <path d="M16 16V12a8 8 0 0116 0v4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                <circle cx="18" cy="27" r="3" fill="currentColor" />
+                <circle cx="30" cy="27" r="3" fill="currentColor" />
+                <path d="M18 30c0 3 12 3 12 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path d="M8 25H4M44 25h-4M24 38v4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+        ),
+    },
+    {
+        color: "#3b82f6",
+        number: "02",
+        title: "Automation Infrastructure",
+        subtitle: "Zero Friction Operations",
+        description:
+            "Robust workflows and integration layers that eliminate manual overhead — so your team operates at maximum leverage, always.",
+        icon: (
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <path d="M24 6v8M24 34v8M6 24h8M34 24h8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                <circle cx="24" cy="24" r="10" stroke="currentColor" strokeWidth="2.5" />
+                <circle cx="24" cy="24" r="4" fill="currentColor" />
+                <path d="M10.1 10.1l5.66 5.66M32.24 32.24l5.66 5.66M10.1 37.9l5.66-5.66M32.24 15.76l5.66-5.66"
+                    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+        ),
+    },
+    {
+        color: "#22c55e",
+        number: "03",
+        title: "Growth Systems",
+        subtitle: "Compounding Results",
+        description:
+            "Data-driven growth engines that identify leverage points, automate acquisition, and turn insights into compounding revenue.",
+        icon: (
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <path d="M6 38l10-12 8 6 10-14 8-10" stroke="currentColor" strokeWidth="2.5"
+                    strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="42" cy="8" r="4" fill="currentColor" />
+                <path d="M6 42h36" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                <path d="M34 20l8-12-8 2-2-8" stroke="currentColor" strokeWidth="2"
+                    strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+        ),
+    },
+];
+
+// ── Component ────────────────────────────────────────────────────────────────
+export default function Services() {
+    const sectionRef = useRef<HTMLElement>(null);
+    const headingRef = useRef<HTMLDivElement>(null);
+    const taglineRef = useRef<HTMLParagraphElement>(null);
+    const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+    const fillRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+    useEffect(() => {
+        const ctx = gsap.context(() => {
+
+            // ── Heading lines reveal ──────────────────────────────────────────
+            const headingLines = headingRef.current?.querySelectorAll<HTMLElement>(".line-wrap");
+            if (headingLines && headingLines.length > 0) {
+                gsap.fromTo(
+                    headingLines,
+                    { y: 80, opacity: 0, rotateX: -15 },
+                    {
+                        y: 0, opacity: 1, rotateX: 0,
+                        duration: 1.1, ease: "power4.out", stagger: 0.12,
+                        scrollTrigger: {
+                            trigger: headingRef.current,
+                            start: "top 80%",
+                            toggleActions: "play none none reset",
+                        },
+                    }
+                );
+            }
+
+            // ── Tagline reveal ────────────────────────────────────────────────
+            if (taglineRef.current) {
+                gsap.fromTo(
+                    taglineRef.current,
+                    { y: 30, opacity: 0 },
+                    {
+                        y: 0, opacity: 1, duration: 0.9, ease: "power3.out", delay: 0.4,
+                        scrollTrigger: {
+                            trigger: taglineRef.current,
+                            start: "top 85%",
+                            toggleActions: "play none none reset",
+                        },
+                    }
+                );
+            }
+
+            // ── Cards ─────────────────────────────────────────────────────────
+            cardsRef.current.forEach((card, i) => {
+                if (!card) return;
+
+                // No entry animation — cards visible immediately
+
+                const fill = fillRefs.current[i];
+                const content = contentRefs.current[i];
+                if (!fill || !content) return;
+
+                gsap.set(fill, { scaleY: 0, transformOrigin: "top center" });
+
+                let isFilled = false;
+
+                // ── ST1: card's top hits viewport bottom (scroll down = enter from below)
+                //         card's top leaves viewport bottom (scroll up = exit below)
+                ScrollTrigger.create({
+                    trigger: card,
+                    start: "top bottom",   // card 1% enters from bottom
+                    onEnter: () => {
+                        // scroll DOWN — fill top center → downward
+                        if (isFilled) return;
+                        isFilled = true;
+                        gsap.set(fill, { transformOrigin: "top center", scaleY: 0 });
+                        gsap.to(fill, { scaleY: 1, duration: 0.65, ease: "power2.inOut" });
+                        gsap.to(content, { color: "#ffffff", duration: 0.35, delay: 0.25, ease: "power2.out" });
+                    },
+                    onLeaveBack: () => {
+                        // scroll UP — card fully exits bottom → drain top center downward
+                        isFilled = false;
+                        gsap.set(fill, { transformOrigin: "top center", scaleY: 1 });
+                        gsap.to(fill, { scaleY: 0, duration: 0.6, ease: "power2.inOut" });
+                        gsap.to(content, { color: "#000000", duration: 0.3, ease: "power2.out" });
+                    },
+                });
+
+                // ── ST2: card's bottom hits 20% from top (80% of card gone above)
+                //         card's bottom leaves 20% mark going back down (scroll up)
+                ScrollTrigger.create({
+                    trigger: card,
+                    start: CARD_DRAIN_TRIGGER,
+                    onEnter: () => {
+                        // scroll DOWN — drain bottom center → upward
+                        isFilled = false;
+                        gsap.set(fill, { transformOrigin: "bottom center", scaleY: 1 });
+                        gsap.to(fill, { scaleY: 0, duration: 0.65, ease: "power2.inOut" });
+                        gsap.to(content, { color: "#000000", duration: 0.35, ease: "power2.out" });
+                    },
+                    onLeaveBack: () => {
+                        // scroll UP — card re-enters from top (20% visible) → fill bottom center upward
+                        isFilled = true;
+                        gsap.set(fill, { transformOrigin: "bottom center", scaleY: 0 });
+                        gsap.to(fill, { scaleY: 1, duration: 0.65, ease: "power2.inOut" });
+                        gsap.to(content, { color: "#ffffff", duration: 0.35, delay: 0.25, ease: "power2.out" });
+                    },
+                });
+            });
+
+        }, sectionRef);
+
+        return () => ctx.revert();
+    }, []);
+
+    return (
+        <section
+            ref={sectionRef}
+            style={{
+                fontFamily: FONT,
+                paddingTop: "120px",
+                paddingBottom: "140px",
+                minHeight: "100vh",
+            }}
+        >
+            <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 40px" }}>
+
+                {/* ── Header ── */}
+                <div style={{ marginBottom: "80px" }}>
+
+                    {/* Label */}
+                    <div style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        letterSpacing: "0.2em",
+                        textTransform: "uppercase",
+                        color: "rgba(0,0,0,0.4)",
+                        marginBottom: "28px",
+                        fontFamily: FONT,
+                    }}>
+                        <span style={{ display: "block", width: "24px", height: "1.5px", background: "currentColor", flexShrink: 0 }} />
+                        Our Capabilities
+                    </div>
+
+                    {/* Heading */}
+                    <div ref={headingRef}>
+                        {["Capabilities That Power Intelligent Companies."].map((line) => (
+                            <span key={line} style={{ overflow: "hidden", display: "block" }}>
+                                <span
+                                    className="line-wrap"
+                                    style={{
+                                        display: "block",
+                                        fontSize: "42px",
+                                        fontWeight: 800,
+                                        lineHeight: 1.4,
+                                        letterSpacing: "-0.035em",
+                                        color: "#000",
+                                        fontFamily: FONT,
+                                    }}
+                                >
+                                    {line}
+                                </span>
+                            </span>
+                        ))}
+                    </div>
+
+                    {/* Tagline */}
+                    <p
+                        ref={taglineRef}
+                        style={{
+                            maxWidth: "480px",
+                            fontSize: "16px",
+                            lineHeight: 1.75,
+                            color: "#000",
+                            fontWeight: 400,
+                            fontFamily: FONT,
+                            margin: "28px 0 0 0",
+                        }}
+                    >
+                        We build systems that don&apos;t just solve problems — they create
+                        lasting competitive advantages for the companies we partner with.
+                    </p>
+                </div>
+
+                {/* Divider */}
+                <div style={{
+                    width: "100%",
+                    height: "1px",
+                    background: "linear-gradient(90deg, transparent, rgba(0,0,0,0.12) 30%, rgba(0,0,0,0.12) 70%, transparent)",
+                    marginBottom: "72px",
+                }} />
+
+                {/* ── Cards ── */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                    {CARDS.map((card, i) => {
+                        const isHovered = hoveredIdx === i;
+
+                        const cardStyle: CSSProperties = {
+                            position: "relative",
+                            overflow: "hidden",
+                            border: `1.5px solid ${isHovered ? "rgba(0,0,0,0.18)" : "rgba(0,0,0,0.10)"}`,
+                            background: "#ffffff",
+                            cursor: "default",
+                            boxShadow: isHovered ? "0 32px 80px rgba(0,0,0,0.12)" : "none",
+                            transition: "box-shadow 0.4s ease, border-color 0.3s ease",
+                            minHeight: "110vh",
+                        };
+
+                        return (
+                            <div
+                                key={card.number}
+                                ref={(el) => { cardsRef.current[i] = el; }}
+                                style={cardStyle}
+                                onMouseEnter={() => setHoveredIdx(i)}
+                                onMouseLeave={() => setHoveredIdx(null)}
+                            >
+                                {/* Color fill layer */}
+                                <div
+                                    ref={(el) => { fillRefs.current[i] = el; }}
+                                    style={{
+                                        position: "absolute",
+                                        inset: 0,
+                                        transform: "scaleY(0)",
+                                        transformOrigin: "top center",
+                                        zIndex: 0,
+                                        willChange: "transform",
+                                        backgroundColor: card.color,
+                                    }}
+                                />
+
+                                {/* Content */}
+                                <div
+                                    ref={(el) => { contentRefs.current[i] = el; }}
+                                    style={{
+                                        position: "relative",
+                                        zIndex: 1,
+                                        color: "#000000",
+                                        padding: "52px 40px 56px",
+                                        fontFamily: FONT,
+                                        minHeight: "110vh",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "space-between",
+                                    }}
+                                >
+                                    {/* Top group */}
+                                    <div>
+                                        {/* Top row */}
+                                        <div style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "flex-start",
+                                            marginBottom: "56px",
+                                        }}>
+                                            <div style={{
+                                                width: "64px",
+                                                height: "64px",
+                                                borderRadius: "20px",
+                                                border: "1.5px solid currentColor",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                opacity: isHovered ? 1 : 0.85,
+                                                padding: "14px",
+                                                transition: "opacity 0.3s",
+                                                boxSizing: "border-box",
+                                                flexShrink: 0,
+                                            }}>
+                                                {card.icon}
+                                            </div>
+                                            <span style={{
+                                                fontFamily: FONT,
+                                                fontSize: "13px",
+                                                fontWeight: 700,
+                                                letterSpacing: "0.18em",
+                                                textTransform: "uppercase",
+                                                opacity: 0.4,
+                                            }}>
+                                                {card.number}
+                                            </span>
+                                        </div>
+
+                                        {/* Title block */}
+                                        <div style={{ marginBottom: "24px" }}>
+                                            <p style={{
+                                                fontSize: "12px",
+                                                fontWeight: 600,
+                                                letterSpacing: "0.14em",
+                                                textTransform: "uppercase",
+                                                opacity: 0.5,
+                                                margin: "0 0 10px 0",
+                                                fontFamily: FONT,
+                                            }}>
+                                                {card.subtitle}
+                                            </p>
+                                            <h3 style={{
+                                                fontFamily: FONT,
+                                                fontSize: "clamp(24px, 2.2vw, 32px)",
+                                                fontWeight: 700,
+                                                lineHeight: 1.15,
+                                                letterSpacing: "-0.02em",
+                                                margin: 0,
+                                            }}>
+                                                {card.title}
+                                            </h3>
+                                        </div>
+
+                                        {/* Divider */}
+                                        <div style={{
+                                            width: "100%",
+                                            height: "1px",
+                                            background: "currentColor",
+                                            opacity: 0.12,
+                                            marginBottom: "24px",
+                                        }} />
+
+                                        {/* Description */}
+                                        <p style={{
+                                            fontSize: "16px",
+                                            lineHeight: 1.75,
+                                            opacity: 0.7,
+                                            margin: 0,
+                                            fontFamily: FONT,
+                                        }}>
+                                            {card.description}
+                                        </p>
+                                    </div>
+
+                                    {/* Bottom row */}
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                        <span style={{
+                                            fontSize: "13px",
+                                            fontWeight: 600,
+                                            letterSpacing: "0.06em",
+                                            opacity: 0.6,
+                                            fontFamily: FONT,
+                                        }}>
+                                            Explore service
+                                        </span>
+                                        <div style={{
+                                            width: "40px",
+                                            height: "40px",
+                                            borderRadius: "50%",
+                                            border: "1.5px solid currentColor",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            opacity: isHovered ? 1 : 0.5,
+                                            transform: isHovered ? "translate(3px, -3px)" : "translate(0, 0)",
+                                            transition: "opacity 0.3s, transform 0.3s",
+                                            flexShrink: 0,
+                                        }}>
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                                <path
+                                                    d="M3 13L13 3M13 3H6M13 3v7"
+                                                    stroke="currentColor"
+                                                    strokeWidth="1.8"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+            </div>
+        </section>
+    );
+}
+.......
+"use client";
+
+import { useEffect, useRef, useState, CSSProperties } from "react";
+import gsap from "@/lib/gsap";
+import { ScrollTrigger } from "@/lib/gsap";
+
+const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+
+const BLOCK_COLORS = ["#ef4444", "#3b82f6", "#22c55e"];
+
+interface BlockData {
+    index: string;
+    title: string;
+    tag: string;
+    body: string;
+    metric: string;
+    metricLabel: string;
+}
+
+const BLOCKS: BlockData[] = [
+    {
+        index: "01",
+        title: "Elite Engineering",
+        tag: "Architecture & Systems",
+        body: "We don't just write code — we architect systems. Every decision is made with scale, maintainability, and performance in mind. Our engineers have shipped products used by millions, and that experience shows in everything we touch.",
+        metric: "10×",
+        metricLabel: "faster delivery vs. traditional agencies",
+    },
+    {
+        index: "02",
+        title: "Production-First Approach",
+        tag: "Built to Ship",
+        body: "Prototypes are fine. But what we care about is production. We build for the edge cases, the traffic spikes, the unexpected — so when you scale, the foundation never cracks. No shortcuts, no tech debt handed off to your team.",
+        metric: "99.9%",
+        metricLabel: "uptime across client deployments",
+    },
+    {
+        index: "03",
+        title: "Long-Term Partnership",
+        tag: "Beyond the Deliverable",
+        body: "We measure success in years, not sprints. When we partner with a company, we become invested in its growth — attending to strategy, not just execution. Our best clients have been with us since day one.",
+        metric: "4.8yr",
+        metricLabel: "average client relationship length",
+    },
+];
+
+// ── Animated spinning-ring bullet ────────────────────────────────────────────
+function AnimatedBullet({ color }: { color: string }) {
+    const uid = color.replace("#", "");
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 36 36">
+            <style>{`
+                @keyframes spin-ring-${uid} {
+                    from { transform: rotate(0deg); }
+                    to   { transform: rotate(360deg); }
+                }
+                .ring-${uid} {
+                    transform-origin: 18px 18px;
+                    animation: spin-ring-${uid} 2.8s linear infinite;
+                }
+            `}</style>
+            <circle
+                className={`ring-${uid}`}
+                cx="18" cy="18" r="18"
+                fill="none" stroke="#000"
+                strokeWidth="1.5" strokeDasharray="3.5 4.5" opacity="0.6"
+            />
+            <circle cx="18" cy="18" r="14" fill={color} />
+        </svg>
+    );
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+export default function Why() {
+    const sectionRef = useRef<HTMLElement>(null);
+    const headingRef = useRef<HTMLDivElement>(null);
+    const subtextRef = useRef<HTMLParagraphElement>(null);
+    const blockRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const metricRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [activeIdx, setActiveIdx] = useState<number | null>(null);
+
+    useEffect(() => {
+        const ctx = gsap.context(() => {
+
+            // ── Heading word-by-word reveal ───────────────────────────────────
+            const words = headingRef.current?.querySelectorAll<HTMLElement>(".word");
+            if (words && words.length) {
+                gsap.fromTo(words,
+                    { y: 60, opacity: 0 },
+                    {
+                        y: 0, opacity: 1,
+                        duration: 0.9, ease: "power4.out", stagger: 0.06,
+                        scrollTrigger: { trigger: headingRef.current, start: "top 82%", toggleActions: "play none none reset" },
+                    }
+                );
+            }
+
+            // ── Subtext ───────────────────────────────────────────────────────
+            if (subtextRef.current) {
+                gsap.fromTo(subtextRef.current,
+                    { y: 24, opacity: 0 },
+                    {
+                        y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.5,
+                        scrollTrigger: { trigger: subtextRef.current, start: "top 85%", toggleActions: "play none none reset" },
+                    }
+                );
+            }
+
+            // ── Block rows ────────────────────────────────────────────────────
+            blockRefs.current.forEach((block, i) => {
+                if (!block) return;
+
+                gsap.fromTo(block,
+                    { y: 50, opacity: 0 },
+                    {
+                        y: 0, opacity: 1, duration: 1, ease: "power3.out",
+                        scrollTrigger: { trigger: block, start: "top 84%", toggleActions: "play none none reset" },
+                    }
+                );
+
+                // Divider line expand
+                const line = lineRefs.current[i];
+                if (line) {
+                    gsap.fromTo(line,
+                        { scaleX: 0, transformOrigin: "left center" },
+                        {
+                            scaleX: 1, duration: 1.1, ease: "power3.inOut",
+                            scrollTrigger: { trigger: block, start: "top 84%", toggleActions: "play none none reset" },
+                        }
+                    );
+                }
+
+                // Metric pop-in
+                const metric = metricRefs.current[i];
+                if (metric) {
+                    gsap.fromTo(metric,
+                        { y: 20, opacity: 0, scale: 0.88 },
+                        {
+                            y: 0, opacity: 1, scale: 1, duration: 0.9, ease: "back.out(1.4)", delay: 0.25,
+                            scrollTrigger: { trigger: block, start: "top 84%", toggleActions: "play none none reset" },
+                        }
+                    );
+                }
+            });
+
+        }, sectionRef);
+
+        return () => ctx.revert();
+    }, []);
+
+    const headingWords = "Built For Companies That Move Fast".split(" ");
+
+    return (
+        <section
+            ref={sectionRef}
+            style={{
+                fontFamily: FONT,
+                backgroundColor: "#ffffff",
+                paddingTop: "140px",
+                paddingBottom: "160px",
+            }}
+        >
+            <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 40px" }}>
+
+                {/* ── Top: label + heading + subtext ── */}
+                <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "40px",
+                    alignItems: "flex-end",
+                    marginBottom: "100px",
+                }}>
+                    {/* Left: heading */}
+                    <div>
+                        <div style={{
+                            display: "inline-flex", alignItems: "center", gap: "8px",
+                            fontSize: "12px", fontWeight: 600, letterSpacing: "0.2em",
+                            textTransform: "uppercase", color: "rgba(0,0,0,0.38)",
+                            marginBottom: "32px", fontFamily: FONT,
+                        }}>
+                            <span style={{ width: "24px", height: "1.5px", background: "currentColor", display: "block", flexShrink: 0 }} />
+                            Why Us
+                        </div>
+
+                        <div ref={headingRef} style={{ perspective: "600px" }}>
+                            <h2 style={{
+                                fontSize: "clamp(38px, 4.8vw, 68px)",
+                                fontWeight: 800,
+                                lineHeight: 1.05,
+                                letterSpacing: "-0.035em",
+                                color: "#0a0a0a",
+                                margin: 0,
+                                fontFamily: FONT,
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "0 0.28em",
+                                overflow: "hidden",
+                            }}>
+                                {headingWords.map((word, i) => (
+                                    <span key={i} style={{ overflow: "hidden", display: "inline-block" }}>
+                                        <span className="word" style={{ display: "inline-block" }}>{word}</span>
+                                    </span>
+                                ))}
+                            </h2>
+                        </div>
+                    </div>
+
+                    {/* Right: subtext */}
+                    <div style={{ paddingBottom: "6px" }}>
+                        <p
+                            ref={subtextRef}
+                            style={{
+                                fontSize: "17px",
+                                lineHeight: 1.75,
+                                color: "#000",
+                                maxWidth: "420px",
+                                margin: 0,
+                                fontFamily: FONT,
+                                fontWeight: 400,
+                            }}
+                        >
+                            We&apos;ve worked with growth-stage startups and global enterprises alike.
+                            What they share: a need for a partner that operates at the highest level —
+                            technically, strategically, and creatively.
+                        </p>
+                    </div>
+                </div>
+
+                {/* ── Blocks ── */}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                    {BLOCKS.map((block, i) => {
+                        const isActive = activeIdx === i;
+
+                        const rowStyle: CSSProperties = {
+                            display: "grid",
+                            gridTemplateColumns: "80px 1fr 200px",
+                            gap: "0 48px",
+                            alignItems: "start",
+                            padding: "56px 0",
+                            cursor: "default",
+                        };
+
+                        return (
+                            <div key={block.index}>
+                                {/* Top divider line */}
+                                <div
+                                    ref={(el) => { lineRefs.current[i] = el; }}
+                                    style={{
+                                        width: "100%",
+                                        height: "1px",
+                                        background: "rgba(0,0,0,0.12)",
+                                        transformOrigin: "left center",
+                                    }}
+                                />
+
+                                <div
+                                    ref={(el) => { blockRefs.current[i] = el; }}
+                                    style={rowStyle}
+                                    onMouseEnter={() => setActiveIdx(i)}
+                                    onMouseLeave={() => setActiveIdx(null)}
+                                >
+                                    {/* Animated bullet */}
+                                    <div style={{ paddingTop: "2px" }}>
+                                        <AnimatedBullet color={BLOCK_COLORS[i]} />
+                                    </div>
+
+                                    {/* Main content */}
+                                    <div>
+                                        {/* Tag */}
+                                        <div style={{
+                                            display: "inline-block",
+                                            fontSize: "11px",
+                                            fontWeight: 600,
+                                            letterSpacing: "0.14em",
+                                            textTransform: "uppercase",
+                                            color: isActive ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.35)",
+                                            border: "1px solid currentColor",
+                                            borderRadius: "100px",
+                                            padding: "5px 14px",
+                                            marginBottom: "20px",
+                                            fontFamily: FONT,
+                                            transition: "color 0.3s",
+                                        }}>
+                                            {block.tag}
+                                        </div>
+
+                                        {/* Title */}
+                                        <h3 style={{
+                                            fontSize: "clamp(26px, 2.8vw, 38px)",
+                                            fontWeight: 700,
+                                            lineHeight: 1.1,
+                                            letterSpacing: "-0.025em",
+                                            color: "#0a0a0a",
+                                            margin: "0 0 20px 0",
+                                            fontFamily: FONT,
+                                            transition: "transform 0.4s ease",
+                                            transform: isActive ? "translateX(6px)" : "translateX(0)",
+                                        }}>
+                                            {block.title}
+                                        </h3>
+
+                                        {/* Body */}
+                                        <p style={{
+                                            fontSize: "16px",
+                                            lineHeight: 1.75,
+                                            color: "#000",
+                                            maxWidth: "560px",
+                                            margin: 0,
+                                            fontFamily: FONT,
+                                            fontWeight: 400,
+                                        }}>
+                                            {block.body}
+                                        </p>
+                                    </div>
+
+                                    {/* Metric */}
+                                    <div
+                                        ref={(el) => { metricRefs.current[i] = el; }}
+                                        style={{ textAlign: "right", paddingTop: "4px" }}
+                                    >
+                                        <div style={{
+                                            fontSize: "clamp(36px, 3.5vw, 52px)",
+                                            fontWeight: 800,
+                                            letterSpacing: "-0.04em",
+                                            color: isActive ? "#0a0a0a" : "rgba(0,0,0,0.15)",
+                                            lineHeight: 1,
+                                            marginBottom: "10px",
+                                            fontFamily: FONT,
+                                            transition: "color 0.4s ease",
+                                        }}>
+                                            {block.metric}
+                                        </div>
+                                        <div style={{
+                                            fontSize: "12px",
+                                            fontWeight: 500,
+                                            lineHeight: 1.5,
+                                            color: "rgba(0,0,0,0.38)",
+                                            fontFamily: FONT,
+                                            maxWidth: "160px",
+                                            marginLeft: "auto",
+                                        }}>
+                                            {block.metricLabel}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Bottom divider */}
+                    {/* <div style={{ width: "100%", height: "1px", background: "rgba(0,0,0,0.12)" }} /> */}
+                </div>
+
+                {/* ── Bottom CTA strip ──
+                <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginTop: "80px",
+                    paddingTop: "48px",
+                    borderTop: "1px solid rgba(0,0,0,0.08)",
+                }}>
+                    <p style={{
+                        fontSize: "15px",
+                        color: "rgba(0,0,0,0.42)",
+                        fontFamily: FONT,
+                        margin: 0,
+                        maxWidth: "360px",
+                        lineHeight: 1.6,
+                    }}>
+                        Trusted by companies in 12 countries — from pre-seed to post-IPO.
+                    </p>
+
+                    <button
+                        style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            backgroundColor: "#0a0a0a",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "100px",
+                            padding: "16px 32px",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                            fontFamily: FONT,
+                            cursor: "pointer",
+                            letterSpacing: "0.02em",
+                            transition: "background 0.25s ease, transform 0.25s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "#222";
+                            (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+                        }}
+                        onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "#0a0a0a";
+                            (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+                        }}
+                    >
+                        See Our Work
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 12L12 2M12 2H5M12 2v7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </button>
+                </div> */}
+
+            </div>
+        </section>
+    );
+}
+..........
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import gsap from "@/lib/gsap";
+import { ScrollTrigger } from "@/lib/gsap";
+
+const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+
+// ── Client data with real SVG logos ──────────────────────────────────────────
+const CLIENTS = [
+    {
+        name: "OpenAI",
+        category: "AI Research",
+        logo: (
+            <svg viewBox="0 0 200 200" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <path d="M183.6 102.5c4.2-13 2.6-27.2-4.4-39C169.6 46 155 38.3 140 39.2c-8.8-11.5-22.3-18.3-36.7-18.3-26.3 0-47.7 21.3-47.8 47.6-13.4 2.7-25 10.8-32.2 22.5-13.2 22.8-6.4 52 15.2 66.6-4.2 13-2.6 27.2 4.4 39 9.6 16.6 27.8 26.2 46.5 24.9 8.8 11.5 22.3 18.3 36.7 18.3 26.3 0 47.7-21.3 47.8-47.6 13.4-2.7 25-10.8 32.2-22.5 13.1-22.8 6.3-52-15.3-66.6l.8-.6zm-73.6 102c-9.2 0-18-3.2-24.9-9 .3-.2.9-.5 1.3-.7l41.4-23.9c2.1-1.2 3.4-3.4 3.4-5.8V107l17.5 10.1c.2.1.3.3.3.5v48.4c0 20.2-16.4 36.5-39 36.5zm-84-33.6c-4.6-8-6.3-17.3-4.8-26.4.3.2.8.5 1.2.7l41.4 23.9c2.1 1.2 4.7 1.2 6.8 0l50.5-29.2v20.2c0 .2-.1.4-.3.6L79.9 184c-17.5 10.1-39.9 4.1-53.9-13.1zm-11-89.7c4.6-8 11.8-14 20.4-17.3v49.2c0 2.4 1.3 4.6 3.4 5.8l50.5 29.2-17.5 10.1c-.2.1-.4.1-.6.1L30 137.5C12.5 127.4 8.5 103.9 15 81.2zm144.5 31.4L108.9 83.4l17.5-10.1c.2-.1.4-.1.6-.1L171 97.6c17.5 10.1 21.5 33.5 14.9 56.2-4.6 8-11.8 14-20.4 17.3v-49.2c0-2.4-1.3-4.6-3.4-5.8l-.6.5zm17.4-26.7c-.3-.2-.8-.5-1.2-.7L134.3 62.3c-2.1-1.2-4.7-1.2-6.8 0L77 91.5V71.3c0-.2.1-.4.3-.6L118.2 47c17.5-10.1 39.9-4.1 53.9 13.1 4.6 8 6.3 17.3 4.8 26.4l-.1-.5zM83.5 117l-17.5-10.1c-.2-.1-.3-.3-.3-.5V57.9c0-20.2 16.6-36.6 39.1-36.5 9.2 0 18 3.2 24.9 9-.3.2-.9.5-1.3.7l-41.4 23.9c-2.1 1.2-3.4 3.4-3.4 5.8V117h-.1zm9.5-20.5l22.5-13 22.5 13v26l-22.5 13-22.5-13v-26z" />
+            </svg>
+        ),
+    },
+    {
+        name: "Stripe",
+        category: "Payments",
+        logo: (
+            <svg viewBox="0 0 200 84" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <path d="M15 57.2c0 5.9 4.8 8.2 9.8 8.2 4.6 0 7.4-2.1 7.4-5.3 0-3.7-2.6-4.9-9-6.6-9.2-2.4-15.3-5.6-15.3-14.1C7.9 30.1 15.4 25 25.3 25c9.4 0 16.3 5.3 16.3 13.4H31.5c0-4.4-3.2-6.8-7.4-6.8-3.8 0-6.6 1.9-6.6 4.9 0 3.4 2.8 4.5 10.3 6.5 9.1 2.5 14.1 5.9 14.1 14.3 0 9.4-7.9 14-18.2 14C13.8 71.3 5 66 5 57.2H15zm42.3-30.9v7.4h8.7v7.7h-8.7v19.4c0 3.4 1.3 4.9 4.6 4.9 1.4 0 2.5-.1 3.9-.4v7.9c-2 .6-4.4.9-7 .9-7.4 0-12.3-3.9-12.3-12.5V41.4h-6.8v-7.7h6.8v-7.4h10.8zm14.4 7.4h10.4v6.6h.2c2-4.4 5.8-7.3 11.1-7.3 1.1 0 2.2.1 3.2.4v9.8c-1.3-.4-3-.7-4.6-.7-6.2 0-9.9 4-9.9 11.1v17h-10.4V33.7zm27.4 37h10.4V33.7H99.1v37zm5.2-42.8c-3.5 0-6.2-2.7-6.2-6.2s2.7-6.2 6.2-6.2c3.5 0 6.2 2.7 6.2 6.2s-2.7 6.2-6.2 6.2zm14.7 5.8h9.9v5.5h.2c2.5-4 6.6-6.3 12.1-6.3 9 0 15.1 6.3 15.1 18.5v19.3h-10.4V52.8c0-6.1-2.8-9.7-7.7-9.7-5.3 0-8.8 3.9-8.8 10.3v17.3h-10.4V33.7zm53.1 19.1c0-7.2 3.8-12.2 9.9-12.2 5.5 0 9.2 4.5 9.2 12.2 0 7.6-3.7 12.1-9.2 12.1-6.1 0-9.9-5-9.9-12.1zm-.2 11.8c2.2 4.1 6.6 7.1 13 7.1C190.8 71.7 200 63 200 52.7c0-10.4-8.9-19.7-20.4-19.7-5.8 0-10.2 2.5-12.6 6.5h-.2v-5.8h-9.9v52h10.4V64.6h.2z" />
+            </svg>
+        ),
+    },
+    {
+        name: "Notion",
+        category: "Productivity",
+        logo: (
+            <svg viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <path d="M6.07 7.5c1.73 1.4 2.38 1.3 5.63 1.08l58.5-3.47c.65 0 .11-.65-.11-.76L61.84 0C60.33-.33 57.4.11 54.57.32L-1.74 4.68c-2.27.22-2.7 1.3-1.84 2.16L6.07 7.5zM9.1 18.72V79.2c0 3.46.86 4.75 5.61 4.43l64.4-3.68c4.75-.33 5.29-3.25 5.29-6.72V13.21c0-3.46-1.3-5.18-4.1-4.86L13.2 11.89c-3.02.32-4.1 1.73-4.1 6.83zm63.43 3.78c.43 1.95 0 3.89-1.95 4.1l-3.24.65v47.52c-2.81 1.52-5.4 2.38-7.56 2.38-3.46 0-4.32-1.08-6.9-4.32L34.6 43.06v30.28l6.48 1.41s0 3.89-5.4 3.89L21.9 79.2c-.43-1.95.65-2.7 2.16-3.03l5.62-1.62V31.15l-7.78-.54c-.43-1.95.65-4.75 3.67-4.97l14.69-1.07 20.04 30.82V26.18l-5.4-.65c-.43-2.38 1.29-4.1 3.46-4.32l14.47-.97z" />
+            </svg>
+        ),
+    },
+    {
+        name: "Vercel",
+        category: "Infrastructure",
+        logo: (
+            <svg viewBox="0 0 284 65" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <path d="M141.68 16.25c-11.04 0-19 7.2-19 18s8.96 18 20 18c6.67 0 12.55-2.64 16.19-7.09l-7.65-4.42c-2.02 2.21-5.09 3.5-8.54 3.5-4.79 0-8.86-2.5-10.37-6.5h28.02c.22-1.12.35-2.28.35-3.5 0-10.79-7.96-17.99-19-17.99zm-9.46 14.5c1.25-3.99 4.67-6.5 9.45-6.5 4.79 0 8.21 2.51 9.45 6.5h-18.9zm117.14-14.5c-11.04 0-19 7.2-19 18s8.96 18 20 18c6.67 0 12.55-2.64 16.19-7.09l-7.65-4.42c-2.02 2.21-5.09 3.5-8.54 3.5-4.79 0-8.86-2.5-10.37-6.5h28.02c.22-1.12.35-2.28.35-3.5 0-10.79-7.96-17.99-19-17.99zm-9.45 14.5c1.25-3.99 4.67-6.5 9.45-6.5 4.79 0 8.21 2.51 9.45 6.5h-18.9zm-39.03 3.5c0 6 3.92 10 10 10 4.12 0 7.21-1.87 8.8-4.92l7.68 4.43c-3.18 5.3-9.14 8.49-16.48 8.49-11.05 0-19-7.2-19-18s7.96-18 19-18c7.34 0 13.29 3.19 16.48 8.49l-7.68 4.43c-1.59-3.05-4.68-4.92-8.8-4.92-6.07 0-10 4-10 10zm82.48-29v46h-9v-46h9zM37.59.25l36.95 64H.64L37.59.25zm92.38 5l-27.71 48-27.7-48h10.39l17.31 30 17.3-30h10.41zm58.91 12v9.69c-1-.29-2.06-.49-3.2-.49-5.81 0-10 4-10 10v14.8h-9V17.25h9v5.2c1.69-3.7 5.86-6.2 10.86-6.2.37 0 .74.01 1.11.04l1.23.96z" />
+            </svg>
+        ),
+    },
+    {
+        name: "AWS",
+        category: "Cloud",
+        logo: (
+            <svg viewBox="0 0 304 182" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <path d="M86.4 66.4c0 3.7.4 6.7 1.1 8.9.8 2.2 1.8 4.6 3.2 7.2.5.8.7 1.6.7 2.3 0 1-.6 2-1.9 3L83.2 92c-.9.6-1.8.9-2.6.9-1 0-2-.5-3-1.4-1.4-1.5-2.6-3.1-3.6-4.7-1-1.7-2-3.5-3.1-5.8-7.8 9.2-17.6 13.8-29.4 13.8-8.4 0-15.1-2.4-20-7.2-4.9-4.8-7.4-11.2-7.4-19.2 0-8.5 3-15.4 9.1-20.6 6.1-5.2 14.2-7.8 24.5-7.8 3.4 0 6.9.3 10.6.8 3.7.5 7.5 1.3 11.5 2.2v-7.3c0-7.6-1.6-12.9-4.7-16-3.2-3.1-8.6-4.6-16.3-4.6-3.5 0-7.1.4-10.8 1.3-3.7.9-7.3 2-10.8 3.4-1.6.7-2.8 1.1-3.5 1.3-.7.2-1.2.3-1.6.3-1.4 0-2.1-1-2.1-3.1v-4.9c0-1.6.2-2.8.7-3.5.5-.7 1.4-1.4 2.8-2.1 3.5-1.8 7.7-3.3 12.6-4.5 4.9-1.3 10.1-1.9 15.6-1.9 11.9 0 20.6 2.7 26.2 8.1 5.5 5.4 8.3 13.6 8.3 24.6v32.4zm-40.6 15.2c3.3 0 6.7-.6 10.3-1.8 3.6-1.2 6.8-3.4 9.5-6.4 1.6-1.9 2.8-4 3.4-6.4.6-2.4 1-5.3 1-8.7v-4.2c-2.9-.7-6-1.3-9.2-1.7-3.2-.4-6.3-.6-9.4-.6-6.7 0-11.6 1.3-14.9 4-3.3 2.7-4.9 6.5-4.9 11.5 0 4.7 1.2 8.2 3.7 10.6 2.4 2.5 5.9 3.7 10.5 3.7zm80.3 10.8c-1.8 0-3-.3-3.8-1-.8-.6-1.5-2-2.1-3.9L96.7 10.2c-.6-2-.9-3.3-.9-4 0-1.6.8-2.5 2.4-2.5h9.8c1.9 0 3.2.3 3.9 1 .8.6 1.4 2 2 3.9l16.8 66.2 15.6-66.2c.5-2 1.1-3.3 1.9-3.9.8-.6 2.2-1 4-1h8c1.9 0 3.2.3 4 1 .8.6 1.5 2 1.9 3.9l15.8 67 17.3-67c.6-2 1.3-3.3 2-3.9.8-.6 2.1-1 3.9-1h9.3c1.6 0 2.5.8 2.5 2.5 0 .5-.1 1-.2 1.6-.1.6-.3 1.4-.7 2.5l-24.1 77.3c-.6 2-1.3 3.3-2.1 3.9-.8.6-2.1 1-3.8 1h-8.6c-1.9 0-3.2-.3-4-1-.8-.7-1.5-2-1.9-4L156 23l-15.4 64.4c-.5 2-1.1 3.3-1.9 4-.8.6-2.2 1-4 1h-8.6zm128.5 2.7c-5.2 0-10.4-.6-15.4-1.8-5-1.2-8.9-2.5-11.5-4-1.6-.9-2.7-1.9-3.1-2.8-.4-.9-.6-1.9-.6-2.8v-5.1c0-2.1.8-3.1 2.3-3.1.6 0 1.2.1 1.8.3.6.2 1.5.6 2.5 1 3.4 1.5 7.1 2.7 11 3.5 4 .8 7.9 1.2 11.9 1.2 6.3 0 11.2-1.1 14.6-3.3 3.4-2.2 5.2-5.4 5.2-9.5 0-2.8-.9-5.1-2.7-7-1.8-1.9-5.2-3.6-10.1-5.2l-14.5-4.5c-7.3-2.3-12.7-5.7-16-10.2-3.3-4.4-5-9.3-5-14.5 0-4.2.9-7.9 2.7-11.1 1.8-3.2 4.2-6 7.2-8.2 3-2.3 6.4-4 10.4-5.2 4-1.2 8.2-1.7 12.6-1.7 2.2 0 4.5.1 6.7.4 2.3.3 4.4.7 6.5 1.1 2 .5 3.9 1 5.7 1.6 1.8.6 3.2 1.2 4.2 1.8 1.4.8 2.4 1.6 3 2.5.6.8.9 1.9.9 3.3v4.7c0 2.1-.8 3.2-2.3 3.2-.8 0-2.1-.4-3.8-1.2-5.7-2.6-12.1-3.9-19.2-3.9-5.7 0-10.2 .9-13.3 2.8-3.1 1.9-4.7 4.8-4.7 8.9 0 2.8 1 5.2 3 7.1 2 1.9 5.7 3.8 11 5.5l14.2 4.5c7.2 2.3 12.4 5.5 15.5 9.6 3.1 4.1 4.6 8.8 4.6 14 0 4.3-.9 8.2-2.6 11.6-1.8 3.4-4.2 6.4-7.3 8.8-3.1 2.5-6.8 4.3-11.1 5.6-4.5 1.4-9.2 2.1-14.3 2.1z" />
+                <path d="M273.5 143.7c-32.9 24.3-80.7 37.2-121.8 37.2-57.6 0-109.5-21.3-148.7-56.7-3.1-2.8-.3-6.6 3.4-4.4 42.4 24.6 94.7 39.5 148.8 39.5 36.5 0 76.6-7.6 113.5-23.2 5.5-2.5 10.2 3.6 4.8 7.6z" />
+                <path d="M287.2 128.1c-4.2-5.4-27.8-2.6-38.5-1.3-3.2.4-3.7-2.4-.8-4.5 18.8-13.2 49.7-9.4 53.3-5 3.6 4.5-1 35.4-18.6 50.2-2.7 2.3-5.3 1.1-4.1-1.9 4-9.9 12.9-32.2 8.7-37.5z" />
+            </svg>
+        ),
+    },
+    {
+        name: "Google",
+        category: "Technology",
+        logo: (
+            <svg viewBox="0 0 272 92" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <path d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z" fill="#EA4335" />
+                <path d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z" fill="#FBBC05" />
+                <path d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.67-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.26zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z" fill="#4285F4" />
+                <path d="M225 3v65h-9.5V3H225z" fill="#34A853" />
+                <path d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z" fill="#EA4335" />
+                <path d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65H35.29z" fill="#4285F4" />
+            </svg>
+        ),
+    },
+];
+
+// ── Component ────────────────────────────────────────────────────────────────
+export default function Clients() {
+    const sectionRef = useRef<HTMLElement>(null);
+    const headingRef = useRef<HTMLDivElement>(null);
+    const subtextRef = useRef<HTMLParagraphElement>(null);
+    const countRef = useRef<HTMLDivElement>(null);
+    const eyebrowRef = useRef<HTMLDivElement>(null);
+    const dividerRef = useRef<HTMLDivElement>(null);
+    const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+    useEffect(() => {
+        const ctx = gsap.context(() => {
+
+            // ── Eyebrow line draw + fade ──────────────────────────────────────
+            if (eyebrowRef.current) {
+                const line = eyebrowRef.current.querySelector<HTMLElement>(".eyebrow-line");
+                const text = eyebrowRef.current.querySelector<HTMLElement>(".eyebrow-text");
+                if (line && text) {
+                    gsap.set(line, { scaleX: 0, transformOrigin: "left center" });
+                    gsap.set(text, { opacity: 0, x: -8 });
+                    const tl = gsap.timeline({
+                        scrollTrigger: {
+                            trigger: eyebrowRef.current,
+                            start: "top 85%",
+                            toggleActions: "play none none reset",
+                        },
+                    });
+                    tl.to(line, { scaleX: 1, duration: 0.5, ease: "power3.inOut" })
+                        .to(text, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, "-=0.15");
+                }
+            }
+
+            // ── Heading: 3D rotateX flip per word ────────────────────────────
+            const words = headingRef.current?.querySelectorAll<HTMLElement>(".word");
+            if (words && words.length) {
+                gsap.set(words, { rotateX: 88, y: 32, opacity: 0, transformOrigin: "bottom center" });
+                gsap.to(words, {
+                    rotateX: 0,
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.95,
+                    ease: "power4.out",
+                    stagger: { each: 0.06, ease: "power2.inOut" },
+                    scrollTrigger: {
+                        trigger: headingRef.current,
+                        start: "top 82%",
+                        toggleActions: "play none none reset",
+                    },
+                });
+            }
+
+            // ── Subtext: clip-path wipe reveal ───────────────────────────────
+            if (subtextRef.current) {
+                gsap.set(subtextRef.current, { clipPath: "inset(0 100% 0 0)", opacity: 1 });
+                gsap.to(subtextRef.current, {
+                    clipPath: "inset(0 0% 0 0)",
+                    duration: 1.1,
+                    ease: "power3.inOut",
+                    delay: 0.32,
+                    scrollTrigger: {
+                        trigger: subtextRef.current,
+                        start: "top 87%",
+                        toggleActions: "play none none reset",
+                    },
+                });
+            }
+
+            // ── Stats counter ─────────────────────────────────────────────────
+            if (countRef.current) {
+                gsap.fromTo(countRef.current,
+                    { y: 18, opacity: 0 },
+                    {
+                        y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.55,
+                        scrollTrigger: {
+                            trigger: countRef.current,
+                            start: "top 87%",
+                            toggleActions: "play none none reset",
+                        },
+                    }
+                );
+
+                const statEls = countRef.current.querySelectorAll<HTMLElement>(".stat-value");
+                statEls.forEach((el) => {
+                    const raw = el.getAttribute("data-value") ?? "";
+                    const num = parseFloat(raw.replace(/[^\d.]/g, ""));
+                    const suffix = raw.replace(/[\d.]/g, "");
+                    if (!isNaN(num)) {
+                        const obj = { val: 0 };
+                        gsap.fromTo(obj,
+                            { val: 0 },
+                            {
+                                val: num,
+                                duration: 1.6,
+                                ease: "power2.out",
+                                delay: 0.7,
+                                onUpdate() { el.textContent = `${Math.round(obj.val)}${suffix}`; },
+                                scrollTrigger: {
+                                    trigger: countRef.current,
+                                    start: "top 87%",
+                                    toggleActions: "play none none reset",
+                                },
+                            }
+                        );
+                    }
+                });
+            }
+
+            // ── Divider scale-in ──────────────────────────────────────────────
+            if (dividerRef.current) {
+                gsap.set(dividerRef.current, { scaleX: 0, transformOrigin: "left center" });
+                gsap.to(dividerRef.current, {
+                    scaleX: 1,
+                    duration: 1.2,
+                    ease: "expo.inOut",
+                    scrollTrigger: {
+                        trigger: dividerRef.current,
+                        start: "top 90%",
+                        toggleActions: "play none none reset",
+                    },
+                });
+            }
+
+            // ── Cards: clip-path rise + stagger ──────────────────────────────
+            cardRefs.current.forEach((card, i) => {
+                if (!card) return;
+                gsap.set(card, { clipPath: "inset(100% 0% 0% 0%)", y: 24 });
+                gsap.to(card, {
+                    clipPath: "inset(0% 0% 0% 0%)",
+                    y: 0,
+                    duration: 0.9,
+                    ease: "power4.out",
+                    delay: i * 0.07,
+                    scrollTrigger: {
+                        trigger: card,
+                        start: "top 88%",
+                        toggleActions: "play none none reset",
+                    },
+                });
+            });
+
+        }, sectionRef);
+
+        return () => ctx.revert();
+    }, []);
+
+    const headingWords = "Trusted by Teams Building the Future".split(" ");
+
+    return (
+        <section
+            ref={sectionRef}
+            style={{ fontFamily: FONT }}
+        >
+            <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 40px" }}>
+
+                {/* ── Header ── */}
+                <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "40px",
+                    alignItems: "flex-end",
+                    marginBottom: "80px",
+                }}>
+                    {/* Left */}
+                    <div>
+                        <div
+                            ref={eyebrowRef}
+                            style={{
+                                display: "inline-flex", alignItems: "center", gap: "8px",
+                                fontSize: "12px", fontWeight: 600, letterSpacing: "0.2em",
+                                textTransform: "uppercase", color: "rgba(0,0,0,0.38)",
+                                marginBottom: "28px", fontFamily: FONT,
+                            }}>
+                            <span
+                                className="eyebrow-line"
+                                style={{ width: "24px", height: "1.5px", background: "currentColor", display: "block", flexShrink: 0 }}
+                            />
+                            <span className="eyebrow-text">Our Clients</span>
+                        </div>
+
+                        <div ref={headingRef} style={{ perspective: "800px" }}>
+                            <h2 style={{
+                                fontSize: "clamp(36px, 4.6vw, 64px)",
+                                fontWeight: 800,
+                                lineHeight: 1.05,
+                                letterSpacing: "-0.035em",
+                                color: "#0a0a0a",
+                                margin: 0,
+                                fontFamily: FONT,
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "0 0.26em",
+                            }}>
+                                {headingWords.map((word, i) => (
+                                    <span key={i} style={{ overflow: "hidden", display: "inline-block" }}>
+                                        <span className="word" style={{ display: "inline-block" }}>{word}</span>
+                                    </span>
+                                ))}
+                            </h2>
+                        </div>
+                    </div>
+
+                    {/* Right */}
+                    <div style={{ paddingBottom: "4px" }}>
+                        <p
+                            ref={subtextRef}
+                            style={{
+                                fontSize: "17px",
+                                lineHeight: 1.75,
+                                color: "#000",
+                                maxWidth: "400px",
+                                margin: "0 0 28px 0",
+                                fontFamily: FONT,
+                                fontWeight: 400,
+                            }}
+                        >
+                            From early-stage startups to publicly traded companies — we partner with teams
+                            that have something worth building.
+                        </p>
+
+                        {/* Stats row */}
+                        <div ref={countRef} style={{ display: "flex", gap: "40px" }}>
+                            {[["120+", "Projects shipped"], ["98%", "Retention rate"], ["12", "Countries"]].map(([val, label]) => (
+                                <div key={label}>
+                                    <div
+                                        className="stat-value"
+                                        data-value={val}
+                                        style={{
+                                            fontSize: "28px",
+                                            fontWeight: 800,
+                                            letterSpacing: "-0.03em",
+                                            color: "#0a0a0a",
+                                            lineHeight: 1,
+                                            marginBottom: "4px",
+                                            fontFamily: FONT,
+                                        }}
+                                    >{val}</div>
+                                    <div style={{
+                                        fontSize: "12px",
+                                        color: "rgba(0,0,0,0.4)",
+                                        fontFamily: FONT,
+                                        fontWeight: 500,
+                                        letterSpacing: "0.02em",
+                                    }}>{label}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Divider */}
+                <div
+                    ref={dividerRef}
+                    style={{
+                        width: "100%", height: "1px",
+                        background: "linear-gradient(90deg, transparent, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.1) 70%, transparent)",
+                        marginBottom: "64px",
+                    }}
+                />
+
+                {/* ── Client cards grid ── */}
+                <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "6px",
+                }}>
+                    {CLIENTS.map((client, i) => {
+                        const isHovered = hoveredIdx === i;
+                        return (
+                            <div
+                                key={client.name}
+                                ref={(el) => { cardRefs.current[i] = el; }}
+                                onMouseEnter={() => setHoveredIdx(i)}
+                                onMouseLeave={() => setHoveredIdx(null)}
+                                style={{
+                                    position: "relative",
+                                    backgroundColor: isHovered ? "#0a0a0a" : "#ffffff",
+                                    border: "1.5px solid rgba(0,0,0,0.08)",
+                                    padding: "52px 48px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "32px",
+                                    transition: "background-color 0.35s ease, border-color 0.35s ease",
+                                    cursor: "default",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                {/* Category tag */}
+                                <div style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                }}>
+                                    <span style={{
+                                        fontSize: "11px",
+                                        fontWeight: 600,
+                                        letterSpacing: "0.16em",
+                                        textTransform: "uppercase",
+                                        color: isHovered ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.32)",
+                                        fontFamily: FONT,
+                                        transition: "color 0.35s ease",
+                                    }}>
+                                        {client.category}
+                                    </span>
+
+                                    {/* Arrow */}
+                                    <div style={{
+                                        width: "32px",
+                                        height: "32px",
+                                        borderRadius: "50%",
+                                        border: `1px solid ${isHovered ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.12)"}`,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        opacity: isHovered ? 1 : 0,
+                                        transform: isHovered ? "translate(0,0)" : "translate(-4px, 4px)",
+                                        transition: "opacity 0.3s ease, transform 0.3s ease, border-color 0.35s ease",
+                                        flexShrink: 0,
+                                    }}>
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                            <path d="M2 10L10 2M10 2H4M10 2v6" stroke={isHovered ? "#fff" : "#000"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                {/* Logo */}
+                                <div style={{
+                                    height: "44px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    color: isHovered ? "#ffffff" : "#0a0a0a",
+                                    transition: "color 0.35s ease",
+                                    opacity: isHovered ? 0.9 : 0.75,
+                                }}>
+                                    <div style={{ height: "100%", maxWidth: "140px" }}>
+                                        {client.logo}
+                                    </div>
+                                </div>
+
+                                {/* Name */}
+                                <div style={{
+                                    fontSize: "14px",
+                                    fontWeight: 600,
+                                    letterSpacing: "-0.01em",
+                                    color: isHovered ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.3)",
+                                    fontFamily: FONT,
+                                    transition: "color 0.35s ease",
+                                }}>
+                                    {client.name}
+                                </div>
+
+                                {/* Subtle corner accent */}
+                                <div style={{
+                                    position: "absolute",
+                                    bottom: 0,
+                                    right: 0,
+                                    width: "80px",
+                                    height: "80px",
+                                    borderTop: `1px solid ${isHovered ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)"}`,
+                                    borderLeft: `1px solid ${isHovered ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)"}`,
+                                    borderTopLeftRadius: "16px",
+                                    transition: "border-color 0.35s ease",
+                                    pointerEvents: "none",
+                                }} />
+                            </div>
+                        );
+                    })}
+                </div>
+
+            </div>
+        </section>
+    );
+}
+.......
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import gsap from "@/lib/gsap";
+import { ScrollTrigger } from "@/lib/gsap";
+
+const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+
+const PARTNERS = [
+    {
+        name: "OpenAI",
+        category: "AI Foundation",
+        description: "Large language models & embeddings powering our AI core.",
+        logo: (
+            <svg viewBox="0 0 200 200" fill="currentColor" style={{ width: "100%", height: "100%" }}>
+                <path d="M183.6 102.5c4.2-13 2.6-27.2-4.4-39C169.6 46 155 38.3 140 39.2c-8.8-11.5-22.3-18.3-36.7-18.3-26.3 0-47.7 21.3-47.8 47.6-13.4 2.7-25 10.8-32.2 22.5-13.2 22.8-6.4 52 15.2 66.6-4.2 13-2.6 27.2 4.4 39 9.6 16.6 27.8 26.2 46.5 24.9 8.8 11.5 22.3 18.3 36.7 18.3 26.3 0 47.7-21.3 47.8-47.6 13.4-2.7 25-10.8 32.2-22.5 13.1-22.8 6.3-52-15.3-66.6l.8-.6zm-73.6 102c-9.2 0-18-3.2-24.9-9 .3-.2.9-.5 1.3-.7l41.4-23.9c2.1-1.2 3.4-3.4 3.4-5.8V107l17.5 10.1c.2.1.3.3.3.5v48.4c0 20.2-16.4 36.5-39 36.5zm-84-33.6c-4.6-8-6.3-17.3-4.8-26.4.3.2.8.5 1.2.7l41.4 23.9c2.1 1.2 4.7 1.2 6.8 0l50.5-29.2v20.2c0 .2-.1.4-.3.6L79.9 184c-17.5 10.1-39.9 4.1-53.9-13.1zm-11-89.7c4.6-8 11.8-14 20.4-17.3v49.2c0 2.4 1.3 4.6 3.4 5.8l50.5 29.2-17.5 10.1c-.2.1-.4.1-.6.1L30 137.5C12.5 127.4 8.5 103.9 15 81.2zm144.5 31.4L108.9 83.4l17.5-10.1c.2-.1.4-.1.6-.1L171 97.6c17.5 10.1 21.5 33.5 14.9 56.2-4.6 8-11.8 14-20.4 17.3v-49.2c0-2.4-1.3-4.6-3.4-5.8l-.6.5zm17.4-26.7c-.3-.2-.8-.5-1.2-.7L134.3 62.3c-2.1-1.2-4.7-1.2-6.8 0L77 91.5V71.3c0-.2.1-.4.3-.6L118.2 47c17.5-10.1 39.9-4.1 53.9 13.1 4.6 8 6.3 17.3 4.8 26.4l-.1-.5zM83.5 117l-17.5-10.1c-.2-.1-.3-.3-.3-.5V57.9c0-20.2 16.6-36.6 39.1-36.5 9.2 0 18 3.2 24.9 9-.3.2-.9.5-1.3.7l-41.4 23.9c-2.1 1.2-3.4 3.4-3.4 5.8V117h-.1zm9.5-20.5l22.5-13 22.5 13v26l-22.5 13-22.5-13v-26z" />
+            </svg>
+        ),
+    },
+    {
+        name: "AWS",
+        category: "Cloud Infrastructure",
+        description: "Global compute, storage, and serverless at any scale.",
+        logo: (
+            <svg viewBox="0 0 304 182" fill="currentColor" style={{ width: "100%", height: "100%" }}>
+                <path d="M86.4 66.4c0 3.7.4 6.7 1.1 8.9.8 2.2 1.8 4.6 3.2 7.2.5.8.7 1.6.7 2.3 0 1-.6 2-1.9 3L83.2 92c-.9.6-1.8.9-2.6.9-1 0-2-.5-3-1.4-1.4-1.5-2.6-3.1-3.6-4.7-1-1.7-2-3.5-3.1-5.8-7.8 9.2-17.6 13.8-29.4 13.8-8.4 0-15.1-2.4-20-7.2-4.9-4.8-7.4-11.2-7.4-19.2 0-8.5 3-15.4 9.1-20.6 6.1-5.2 14.2-7.8 24.5-7.8 3.4 0 6.9.3 10.6.8 3.7.5 7.5 1.3 11.5 2.2v-7.3c0-7.6-1.6-12.9-4.7-16-3.2-3.1-8.6-4.6-16.3-4.6-3.5 0-7.1.4-10.8 1.3-3.7.9-7.3 2-10.8 3.4-1.6.7-2.8 1.1-3.5 1.3-.7.2-1.2.3-1.6.3-1.4 0-2.1-1-2.1-3.1v-4.9c0-1.6.2-2.8.7-3.5.5-.7 1.4-1.4 2.8-2.1 3.5-1.8 7.7-3.3 12.6-4.5 4.9-1.3 10.1-1.9 15.6-1.9 11.9 0 20.6 2.7 26.2 8.1 5.5 5.4 8.3 13.6 8.3 24.6v32.4zm-40.6 15.2c3.3 0 6.7-.6 10.3-1.8 3.6-1.2 6.8-3.4 9.5-6.4 1.6-1.9 2.8-4 3.4-6.4.6-2.4 1-5.3 1-8.7v-4.2c-2.9-.7-6-1.3-9.2-1.7-3.2-.4-6.3-.6-9.4-.6-6.7 0-11.6 1.3-14.9 4-3.3 2.7-4.9 6.5-4.9 11.5 0 4.7 1.2 8.2 3.7 10.6 2.4 2.5 5.9 3.7 10.5 3.7zm80.3 10.8c-1.8 0-3-.3-3.8-1-.8-.6-1.5-2-2.1-3.9L96.7 10.2c-.6-2-.9-3.3-.9-4 0-1.6.8-2.5 2.4-2.5h9.8c1.9 0 3.2.3 3.9 1 .8.6 1.4 2 2 3.9l16.8 66.2 15.6-66.2c.5-2 1.1-3.3 1.9-3.9.8-.6 2.2-1 4-1h8c1.9 0 3.2.3 4 1 .8.6 1.5 2 1.9 3.9l15.8 67 17.3-67c.6-2 1.3-3.3 2-3.9.8-.6 2.1-1 3.9-1h9.3c1.6 0 2.5.8 2.5 2.5 0 .5-.1 1-.2 1.6-.1.6-.3 1.4-.7 2.5l-24.1 77.3c-.6 2-1.3 3.3-2.1 3.9-.8.6-2.1 1-3.8 1h-8.6c-1.9 0-3.2-.3-4-1-.8-.7-1.5-2-1.9-4L156 23l-15.4 64.4c-.5 2-1.1 3.3-1.9 4-.8.6-2.2 1-4 1h-8.6zm128.5 2.7c-5.2 0-10.4-.6-15.4-1.8-5-1.2-8.9-2.5-11.5-4-1.6-.9-2.7-1.9-3.1-2.8-.4-.9-.6-1.9-.6-2.8v-5.1c0-2.1.8-3.1 2.3-3.1.6 0 1.2.1 1.8.3.6.2 1.5.6 2.5 1 3.4 1.5 7.1 2.7 11 3.5 4 .8 7.9 1.2 11.9 1.2 6.3 0 11.2-1.1 14.6-3.3 3.4-2.2 5.2-5.4 5.2-9.5 0-2.8-.9-5.1-2.7-7-1.8-1.9-5.2-3.6-10.1-5.2l-14.5-4.5c-7.3-2.3-12.7-5.7-16-10.2-3.3-4.4-5-9.3-5-14.5 0-4.2.9-7.9 2.7-11.1 1.8-3.2 4.2-6 7.2-8.2 3-2.3 6.4-4 10.4-5.2 4-1.2 8.2-1.7 12.6-1.7 2.2 0 4.5.1 6.7.4 2.3.3 4.4.7 6.5 1.1 2 .5 3.9 1 5.7 1.6 1.8.6 3.2 1.2 4.2 1.8 1.4.8 2.4 1.6 3 2.5.6.8.9 1.9.9 3.3v4.7c0 2.1-.8 3.2-2.3 3.2-.8 0-2.1-.4-3.8-1.2-5.7-2.6-12.1-3.9-19.2-3.9-5.7 0-10.2.9-13.3 2.8-3.1 1.9-4.7 4.8-4.7 8.9 0 2.8 1 5.2 3 7.1 2 1.9 5.7 3.8 11 5.5l14.2 4.5c7.2 2.3 12.4 5.5 15.5 9.6 3.1 4.1 4.6 8.8 4.6 14 0 4.3-.9 8.2-2.6 11.6-1.8 3.4-4.2 6.4-7.3 8.8-3.1 2.5-6.8 4.3-11.1 5.6-4.5 1.4-9.2 2.1-14.3 2.1z" />
+                <path d="M273.5 143.7c-32.9 24.3-80.7 37.2-121.8 37.2-57.6 0-109.5-21.3-148.7-56.7-3.1-2.8-.3-6.6 3.4-4.4 42.4 24.6 94.7 39.5 148.8 39.5 36.5 0 76.6-7.6 113.5-23.2 5.5-2.5 10.2 3.6 4.8 7.6z" />
+                <path d="M287.2 128.1c-4.2-5.4-27.8-2.6-38.5-1.3-3.2.4-3.7-2.4-.8-4.5 18.8-13.2 49.7-9.4 53.3-5 3.6 4.5-1 35.4-18.6 50.2-2.7 2.3-5.3 1.1-4.1-1.9 4-9.9 12.9-32.2 8.7-37.5z" />
+            </svg>
+        ),
+    },
+    {
+        name: "Google Cloud",
+        category: "ML & Data",
+        description: "Vertex AI, BigQuery, and distributed data pipelines.",
+        logo: (
+            <svg viewBox="0 0 128 20" fill="none" style={{ width: "100%", height: "100%" }}>
+                <path d="M17.8 6.3H9.6v2h7.4c-.4 3.9-3.7 7-7.4 7-4.2 0-7.6-3.4-7.6-7.6s3.4-7.6 7.6-7.6c2 0 3.8.8 5.2 2l1.4-1.4C14.6.9 12.2 0 9.6 0 4.3 0 0 4.3 0 9.6s4.3 9.6 9.6 9.6c5.6 0 9.3-3.9 9.3-9.5 0-.5 0-1-.1-1.4z" fill="#4285F4" />
+                <path d="M17.8 6.3H9.6v2h7.4c-.4 3.9-3.7 7-7.4 7" fill="#34A853" />
+                <path d="M2 13.1C.7 11.7 0 9.8 0 7.7" fill="#FBBC05" />
+                <path d="M9.6 19.2c2.6 0 4.8-.9 6.5-2.3l-1.5-1.5c-1.3 1-3.1 1.8-5 1.8" fill="#EA4335" />
+                <text x="24" y="15" fontFamily="-apple-system, sans-serif" fontSize="13" fontWeight="500" fill="#5F6368">Google Cloud</text>
+            </svg>
+        ),
+    },
+    {
+        name: "Microsoft Azure",
+        category: "Enterprise Cloud",
+        description: "Enterprise-grade security, compliance, and global reach.",
+        logo: (
+            <svg viewBox="0 0 200 50" fill="none" style={{ width: "100%", height: "100%" }}>
+                <path d="M0 0h23.5L12.3 33.9 0 50V0z" fill="#0078D4" />
+                <path d="M8.1 0h15.4L34.8 35.1 23.4 50H0L8.1 0z" fill="#0078D4" opacity="0.7" />
+                <path d="M23.5 0h11.3L46 50H23.4l.1-16.1L35.6 13 23.5 0z" fill="#0078D4" opacity="0.5" />
+                <text x="52" y="35" fontFamily="-apple-system, sans-serif" fontSize="18" fontWeight="600" fill="#0078D4">Azure</text>
+            </svg>
+        ),
+    },
+];
+
+export default function Partners() {
+    const sectionRef = useRef<HTMLElement>(null);
+    const headingRef = useRef<HTMLDivElement>(null);
+    const subtextRef = useRef<HTMLParagraphElement>(null);
+    const labelRef = useRef<HTMLDivElement>(null);
+    const rowRef = useRef<HTMLDivElement>(null);
+    const dividerRef = useRef<HTMLDivElement>(null);
+    const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+    useEffect(() => {
+        const ctx = gsap.context(() => {
+
+            // ── Label: line draw + text slide ────────────────────────────────
+            if (labelRef.current) {
+                const line = labelRef.current.querySelector<HTMLElement>(".label-line");
+                const text = labelRef.current.querySelector<HTMLElement>(".label-text");
+                if (line && text) {
+                    gsap.set(line, { scaleX: 0, transformOrigin: "left center" });
+                    gsap.set(text, { opacity: 0, x: -10 });
+                    const tl = gsap.timeline({
+                        scrollTrigger: {
+                            trigger: labelRef.current,
+                            start: "top 85%",
+                            toggleActions: "play none none reset",
+                        },
+                    });
+                    tl.to(line, { scaleX: 1, duration: 0.5, ease: "power3.inOut" })
+                        .to(text, { opacity: 1, x: 0, duration: 0.45, ease: "power3.out" }, "-=0.15");
+                }
+            }
+
+            // ── Heading: 3D rotateX flip per word ────────────────────────────
+            const words = headingRef.current?.querySelectorAll<HTMLElement>(".word");
+            if (words && words.length) {
+                gsap.set(words, { rotateX: 88, y: 32, opacity: 0, transformOrigin: "bottom center" });
+                gsap.to(words, {
+                    rotateX: 0,
+                    y: 0,
+                    opacity: 1,
+                    duration: 0.95,
+                    ease: "power4.out",
+                    stagger: { each: 0.065, ease: "power2.inOut" },
+                    scrollTrigger: {
+                        trigger: headingRef.current,
+                        start: "top 83%",
+                        toggleActions: "play none none reset",
+                    },
+                });
+            }
+
+            // ── Subtext: clip-path wipe reveal ───────────────────────────────
+            if (subtextRef.current) {
+                gsap.set(subtextRef.current, { clipPath: "inset(0 100% 0 0)", opacity: 1 });
+                gsap.to(subtextRef.current, {
+                    clipPath: "inset(0 0% 0 0)",
+                    duration: 1.1,
+                    ease: "power3.inOut",
+                    delay: 0.35,
+                    scrollTrigger: {
+                        trigger: subtextRef.current,
+                        start: "top 87%",
+                        toggleActions: "play none none reset",
+                    },
+                });
+            }
+
+            // ── Divider scale-in ──────────────────────────────────────────────
+            if (dividerRef.current) {
+                gsap.set(dividerRef.current, { scaleX: 0, transformOrigin: "left center" });
+                gsap.to(dividerRef.current, {
+                    scaleX: 1,
+                    duration: 1.2,
+                    ease: "expo.inOut",
+                    scrollTrigger: {
+                        trigger: dividerRef.current,
+                        start: "top 88%",
+                        toggleActions: "play none none reset",
+                    },
+                });
+            }
+
+            // ── Cards: clip-path rise + stagger ──────────────────────────────
+            cardRefs.current.forEach((card, i) => {
+                if (!card) return;
+                gsap.set(card, { clipPath: "inset(100% 0% 0% 0%)", y: 24 });
+                gsap.to(card, {
+                    clipPath: "inset(0% 0% 0% 0%)",
+                    y: 0,
+                    duration: 0.9,
+                    ease: "power4.out",
+                    delay: i * 0.09,
+                    scrollTrigger: {
+                        trigger: card,
+                        start: "top 88%",
+                        toggleActions: "play none none reset",
+                    },
+                });
+            });
+
+            // ── Bottom row fade-up ────────────────────────────────────────────
+            if (rowRef.current) {
+                gsap.fromTo(rowRef.current,
+                    { y: 24, opacity: 0 },
+                    {
+                        y: 0, opacity: 1, duration: 0.8, ease: "power3.out",
+                        scrollTrigger: {
+                            trigger: rowRef.current,
+                            start: "top 90%",
+                            toggleActions: "play none none reset",
+                        },
+                    }
+                );
+            }
+
+        }, sectionRef);
+
+        return () => ctx.revert();
+    }, []);
+
+    const headingWords = "Built on Industry-Leading Infrastructure".split(" ");
+
+    return (
+        <section
+            ref={sectionRef}
+            style={{ fontFamily: FONT, paddingTop: "140px", paddingBottom: "160px" }}
+        >
+            <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 40px" }}>
+
+                {/* ── Header ── */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "flex-end", marginBottom: "80px" }}>
+
+                    {/* Left */}
+                    <div>
+                        <div
+                            ref={labelRef}
+                            style={{
+                                display: "inline-flex", alignItems: "center", gap: "8px",
+                                fontSize: "12px", fontWeight: 600, letterSpacing: "0.2em",
+                                textTransform: "uppercase", color: "rgba(0,0,0,0.38)",
+                                marginBottom: "28px", fontFamily: FONT,
+                            }}
+                        >
+                            <span className="label-line" style={{ width: "24px", height: "1.5px", background: "currentColor", display: "block", flexShrink: 0 }} />
+                            <span className="label-text">Technology Stack</span>
+                        </div>
+
+                        <div ref={headingRef} style={{ perspective: "800px" }}>
+                            <h2 style={{
+                                fontSize: "clamp(36px, 4.4vw, 60px)",
+                                fontWeight: 800,
+                                lineHeight: 1.06,
+                                letterSpacing: "-0.035em",
+                                color: "#0a0a0a",
+                                margin: 0,
+                                fontFamily: FONT,
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "0 0.26em",
+                            }}>
+                                {headingWords.map((word, i) => (
+                                    <span key={i} style={{ overflow: "hidden", display: "inline-block" }}>
+                                        <span className="word" style={{ display: "inline-block" }}>{word}</span>
+                                    </span>
+                                ))}
+                            </h2>
+                        </div>
+                    </div>
+
+                    {/* Right */}
+                    <div style={{ paddingBottom: "4px" }}>
+                        <p
+                            ref={subtextRef}
+                            style={{
+                                fontSize: "17px", lineHeight: 1.75,
+                                color: "#000", maxWidth: "400px",
+                                margin: 0, fontFamily: FONT, fontWeight: 400,
+                            }}
+                        >
+                            Every tool we use is chosen for reliability, scale, and speed.
+                            We don&apos;t experiment on production — we ship on proven platforms.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Divider */}
+                <div
+                    ref={dividerRef}
+                    style={{
+                        width: "100%", height: "1px",
+                        background: "linear-gradient(90deg, transparent, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.1) 70%, transparent)",
+                        marginBottom: "64px",
+                    }}
+                />
+
+                {/* ── Cards ── */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "2px" }}>
+                    {PARTNERS.map((p, i) => {
+                        const isHovered = hoveredIdx === i;
+                        return (
+                            <div
+                                key={p.name}
+                                ref={(el) => { cardRefs.current[i] = el; }}
+                                onMouseEnter={() => setHoveredIdx(i)}
+                                onMouseLeave={() => setHoveredIdx(null)}
+                                style={{
+                                    position: "relative",
+                                    backgroundColor: isHovered ? "#f5f5f4" : "#fafaf9",
+                                    border: `1px solid ${isHovered ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.07)"}`,
+                                    padding: "44px 36px 48px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "28px",
+                                    transition: "background-color 0.3s ease, border-color 0.3s ease",
+                                    cursor: "default",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                {/* Gradient top accent line */}
+                                <div style={{
+                                    position: "absolute",
+                                    top: 0, left: 0, right: 0,
+                                    height: "2px",
+                                    background: isHovered
+                                        ? "linear-gradient(90deg, #ef4444, #3b82f6, #22c55e)"
+                                        : "transparent",
+                                    transition: "background 0.4s ease",
+                                }} />
+
+                                {/* Category */}
+                                <div style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                }}>
+                                    <span style={{
+                                        fontSize: "11px", fontWeight: 600,
+                                        letterSpacing: "0.16em", textTransform: "uppercase",
+                                        color: isHovered ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.32)",
+                                        fontFamily: FONT, transition: "color 0.3s",
+                                    }}>
+                                        {p.category}
+                                    </span>
+                                    <div style={{
+                                        width: "28px", height: "28px",
+                                        borderRadius: "50%",
+                                        border: "1px solid rgba(0,0,0,0.14)",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        opacity: isHovered ? 1 : 0,
+                                        transform: isHovered ? "translate(0,0)" : "translate(-4px,4px)",
+                                        transition: "opacity 0.3s, transform 0.3s",
+                                    }}>
+                                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                                            <path d="M1.5 9.5L9.5 1.5M9.5 1.5H3.5M9.5 1.5v6" stroke="rgba(0,0,0,0.6)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                {/* Logo */}
+                                <div style={{
+                                    height: "40px",
+                                    display: "flex", alignItems: "center",
+                                    color: isHovered ? "#0a0a0a" : "rgba(0,0,0,0.6)",
+                                    transition: "color 0.3s ease",
+                                }}>
+                                    <div style={{ height: "100%", maxWidth: "130px" }}>
+                                        {p.logo}
+                                    </div>
+                                </div>
+
+                                {/* Description */}
+                                <p style={{
+                                    fontSize: "14px", lineHeight: 1.65,
+                                    color: isHovered ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.38)",
+                                    margin: 0, fontFamily: FONT,
+                                    transition: "color 0.3s ease",
+                                }}>
+                                    {p.description}
+                                </p>
+
+                                {/* Bottom name */}
+                                <div style={{
+                                    marginTop: "auto",
+                                    fontSize: "13px", fontWeight: 600,
+                                    letterSpacing: "-0.01em",
+                                    color: isHovered ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.2)",
+                                    fontFamily: FONT, transition: "color 0.3s",
+                                }}>
+                                    {p.name}
+                                </div>
+
+                                {/* Corner glow on hover */}
+                                <div style={{
+                                    position: "absolute",
+                                    top: "-40px", right: "-40px",
+                                    width: "120px", height: "120px",
+                                    borderRadius: "50%",
+                                    background: "radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)",
+                                    opacity: isHovered ? 1 : 0,
+                                    transition: "opacity 0.4s ease",
+                                    pointerEvents: "none",
+                                }} />
+                            </div>
+                        );
+                    })}
+                </div>
+
+            </div>
+        </section>
+    );
+}
+.....
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import gsap from "@/lib/gsap";
+import { ScrollTrigger } from "@/lib/gsap";
+
+const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
+
+export default function CTA() {
+    const sectionRef = useRef<HTMLElement>(null);
+    const fillRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const labelRef = useRef<HTMLDivElement>(null);
+    const headingRef = useRef<HTMLDivElement>(null);
+    const subtextRef = useRef<HTMLParagraphElement>(null);
+    const btnRef = useRef<HTMLButtonElement>(null);
+    const lineLeftRef = useRef<HTMLDivElement>(null);
+    const lineRightRef = useRef<HTMLDivElement>(null);
+    const [btnHovered, setBtnHovered] = useState(false);
+
+    useEffect(() => {
+        const ctx = gsap.context(() => {
+
+            // ── Fill/drain the gradient bg ────────────────────────────────────
+            const fill = fillRef.current;
+            const content = contentRef.current;
+
+            if (fill && content) {
+                gsap.set(fill, { scaleY: 0, transformOrigin: "top center" });
+                gsap.set(content, { color: "#0a0a0a" });
+
+                // Scroll DOWN — section enters from bottom → fill top→down
+                ScrollTrigger.create({
+                    trigger: sectionRef.current,
+                    start: "top bottom",
+                    onEnter: () => {
+                        gsap.set(fill, { transformOrigin: "top center", scaleY: 0 });
+                        gsap.to(fill, { scaleY: 1, duration: 0.75, ease: "power2.inOut" });
+                        gsap.to(content, { color: "#ffffff", duration: 0.4, delay: 0.3, ease: "power2.out" });
+                    },
+                    onLeaveBack: () => {
+                        // Scroll UP — section exits bottom → drain top→down
+                        gsap.set(fill, { transformOrigin: "top center", scaleY: 1 });
+                        gsap.to(fill, { scaleY: 0, duration: 0.65, ease: "power2.inOut" });
+                        gsap.to(content, { color: "#0a0a0a", duration: 0.3, ease: "power2.out" });
+                    },
+                });
+            }
+
+
+            [lineLeftRef.current, lineRightRef.current].forEach((el) => {
+                if (!el) return;
+                gsap.fromTo(el,
+                    { scaleX: 0 },
+                    {
+                        scaleX: 1, duration: 1.2, ease: "power3.inOut",
+                        scrollTrigger: { trigger: sectionRef.current, start: "top 80%", toggleActions: "play none none none" }
+                    }
+                );
+            });
+
+            // ── Label ─────────────────────────────────────────────────────────
+            if (labelRef.current) {
+                gsap.fromTo(labelRef.current,
+                    { y: 16, opacity: 0 },
+                    {
+                        y: 0, opacity: 1, duration: 0.7, ease: "power3.out", delay: 0.2,
+                        scrollTrigger: { trigger: labelRef.current, start: "top 85%", toggleActions: "play none none none" }
+                    }
+                );
+            }
+
+            // ── Heading words ─────────────────────────────────────────────────
+            const words = headingRef.current?.querySelectorAll<HTMLElement>(".word");
+            if (words && words.length) {
+                gsap.fromTo(words,
+                    { y: 70, opacity: 0, rotateX: -12 },
+                    {
+                        y: 0, opacity: 1, rotateX: 0, duration: 1, ease: "power4.out", stagger: 0.08, delay: 0.1,
+                        scrollTrigger: { trigger: headingRef.current, start: "top 85%", toggleActions: "play none none none" }
+                    }
+                );
+            }
+
+            // ── Subtext ───────────────────────────────────────────────────────
+            if (subtextRef.current) {
+                gsap.fromTo(subtextRef.current,
+                    { y: 24, opacity: 0 },
+                    {
+                        y: 0, opacity: 1, duration: 0.85, ease: "power3.out", delay: 0.45,
+                        scrollTrigger: { trigger: subtextRef.current, start: "top 88%", toggleActions: "play none none none" }
+                    }
+                );
+            }
+
+            // ── Button pop ────────────────────────────────────────────────────
+            if (btnRef.current) {
+                gsap.fromTo(btnRef.current,
+                    { y: 28, opacity: 0, scale: 0.92 },
+                    {
+                        y: 0, opacity: 1, scale: 1, duration: 0.9, ease: "back.out(1.6)", delay: 0.6,
+                        scrollTrigger: { trigger: btnRef.current, start: "top 90%", toggleActions: "play none none none" }
+                    }
+                );
+            }
+
+        }, sectionRef);
+
+        return () => ctx.revert();
+    }, []);
+
+    const headingWords = "Let's Build Something Extraordinary".split(" ");
+
+    return (
+        <section
+            ref={sectionRef}
+            style={{
+                fontFamily: FONT,
+                backgroundColor: "#ffffff",
+                paddingTop: "160px",
+                paddingBottom: "160px",
+                position: "relative",
+                overflow: "hidden",
+            }}
+        >
+            {/* ── Gradient fill layer (animated) ── */}
+            <div
+                ref={fillRef}
+                style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(135deg, #ef4444 0%, #3b82f6 52%, #22c55e 100%)",
+                    transform: "scaleY(0)",
+                    transformOrigin: "top center",
+                    zIndex: 0,
+                    willChange: "transform",
+                }}
+            />
+
+            {/* ── Noise texture overlay ── */}
+            <div style={{
+                position: "absolute", inset: 0,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+                opacity: 0.04,
+                pointerEvents: "none",
+                zIndex: 1,
+            }} />
+
+            {/* ── Soft vignette center glow ── */}
+            <div style={{
+                position: "absolute", inset: 0,
+                background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(255,255,255,0.18) 0%, transparent 70%)",
+                pointerEvents: "none", zIndex: 1,
+            }} />
+
+            {/* ── All content — color transitions via GSAP ── */}
+            <div
+                ref={contentRef}
+                style={{ maxWidth: "900px", margin: "0 auto", padding: "0 40px", position: "relative", zIndex: 2, textAlign: "center", color: "#0a0a0a" }}
+            >
+
+                {/* ── Top decorative line ── */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "20px", marginBottom: "48px" }}>
+                    <div
+                        ref={lineLeftRef}
+                        style={{ flex: 1, maxWidth: "120px", height: "1px", background: "currentColor", opacity: 0.35, transformOrigin: "right center" }}
+                    />
+                    <div
+                        ref={labelRef}
+                        style={{
+                            fontSize: "11px", fontWeight: 600, letterSpacing: "0.22em",
+                            textTransform: "uppercase", color: "inherit",
+                            fontFamily: FONT, whiteSpace: "nowrap", opacity: 0.7,
+                        }}
+                    >
+                        Ready to start
+                    </div>
+                    <div
+                        ref={lineRightRef}
+                        style={{ flex: 1, maxWidth: "120px", height: "1px", background: "currentColor", opacity: 0.35, transformOrigin: "left center" }}
+                    />
+                </div>
+
+                {/* ── Heading ── */}
+                <div ref={headingRef} style={{ perspective: "800px", marginBottom: "32px" }}>
+                    <h2 style={{
+                        fontSize: "clamp(44px, 6.5vw, 88px)",
+                        fontWeight: 800,
+                        lineHeight: 1.0,
+                        letterSpacing: "-0.04em",
+                        color: "inherit",
+                        margin: 0,
+                        fontFamily: FONT,
+                        display: "flex",
+                        flexWrap: "wrap",
+                        justifyContent: "center",
+                        gap: "0 0.24em",
+                    }}>
+                        {headingWords.map((word, i) => (
+                            <span key={i} style={{ overflow: "hidden", display: "inline-block" }}>
+                                <span className="word" style={{ display: "inline-block" }}>{word}</span>
+                            </span>
+                        ))}
+                    </h2>
+                </div>
+
+                {/* ── Subtext ── */}
+                <p
+                    ref={subtextRef}
+                    style={{
+                        fontSize: "18px",
+                        lineHeight: 1.7,
+                        color: "inherit",
+                        opacity: 0.72,
+                        maxWidth: "520px",
+                        margin: "0 auto 56px",
+                        fontFamily: FONT,
+                        fontWeight: 400,
+                    }}
+                >
+                    Tell us about your idea. We&apos;ll architect the system,
+                    ship the product, and scale it with you.
+                </p>
+
+                {/* ── CTA button ── */}
+                <button
+                    ref={btnRef}
+                    onMouseEnter={() => setBtnHovered(true)}
+                    onMouseLeave={() => setBtnHovered(false)}
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        backgroundColor: "#ffffff",
+                        color: "#0a0a0a",
+                        border: "none",
+                        borderRadius: "100px",
+                        padding: "20px 44px",
+                        fontSize: "15px",
+                        fontWeight: 700,
+                        fontFamily: FONT,
+                        cursor: "pointer",
+                        letterSpacing: "-0.01em",
+                        boxShadow: btnHovered
+                            ? "0 24px 60px rgba(0,0,0,0.25), 0 4px 16px rgba(0,0,0,0.15)"
+                            : "0 8px 32px rgba(0,0,0,0.2)",
+                        transform: btnHovered ? "translateY(-3px) scale(1.03)" : "translateY(0) scale(1)",
+                        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    }}
+                >
+                    Start Your Project
+                    <div style={{
+                        width: "32px", height: "32px",
+                        borderRadius: "50%",
+                        backgroundColor: "#0a0a0a",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transform: btnHovered ? "translate(3px, -3px)" : "translate(0,0)",
+                        transition: "transform 0.3s ease",
+                        flexShrink: 0,
+                    }}>
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 12L12 2M12 2H5M12 2v7" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </div>
+                </button>
+
+                {/* ── Trust note ── */}
+                <p style={{
+                    marginTop: "32px",
+                    fontSize: "13px",
+                    color: "inherit",
+                    opacity: 0.45,
+                    fontFamily: FONT,
+                    letterSpacing: "0.01em",
+                }}>
+                    No commitment required · Response within 24 hours
+                </p>
+
+            </div>
+        </section>
+    );
+}
+.....
+"use client";
+
+import StoryCanvas from "./components/StoryCanvas";
+import Header from "./Header";
+import Hero from "./components/Hero";
+import Process from "./components/Process";
+import Services from "./components/Services";
+import Why from "./components/Why";
+import Clients from "./components/Clients";
+import Partners from "./components/Partners";
+import CTA from "./components/CTA";
+import Footer from "./components/Footer";
+
+export default function Page() {
+  return (
+    <main className="relative bg-white text-black"
+
+    >
+      <div
+        style={{ padding: "0px 94px" }}
+      >
+
+        <Header />
+        <StoryCanvas />
+
+        <Hero />
+        <Process />
+        <Services />
+        <Why />
+        <Clients />
+        <Partners />
+      </div>
+      <CTA />
+      <Footer />
+
+    </main>
+  );
+},,
+
+ye dekho ab mai batata hu dot brhaviour kya rahega,, initiallyheor page k right side me animated circle rahega jo particle se bana hoga, scroll down krne pe usi crcle me se 3 dot emerge honge alag alag color k, color tm jante hi ho,, uske baad process section me wo teeno jaake animated bullet point pe jaake lg jayenge teeno point pe, fr next section services hai, services section me jo teen cards hain uspe jaake teeno dot teen card pe jaake lag jaye aur usi pe laga rhae,, fir next section why section hai, isme bhi teeno point k animatedbullet point pe jaake lag jaye 3no dots,fr next section clients ka hai clients section me jo divider hai cards k ooper , uss divider k center me jaake teeno dot lag jaye ek k side me ek,, fr next section partners hai, to partners section me bhi divier hai same to isme bhi similarly usi divider k center me jaake lag jaye teeno dot ek k side me ek..fr CTA section hai , iss section me teeno dot bs aake merge ho jaye aur visible na rahe, 
+
+Bs yahi tk,, reverse yaani scroll oper krne pe bs yahi behaviour reverse me follow ho..
+
+
+
+<!--  mainnnnnnnn-->
+
+You are implementing the StoryCanvas system for a Next.js + GSAP site.
+
+The page already contains the following sections in this order:
+
+Hero
+Process
+Services
+Why
+Clients
+Partners
+CTA
+Footer
+
+A fixed overlay component called StoryCanvas must render animated dots and particles that interact with elements in these sections while scrolling.
+
+IMPORTANT:
+Do NOT modify existing UI layout.
+Do NOT alter section structure.
+Use only element anchors (IDs).
+
+------------------------------------------------
+
+DOT SYSTEM
+
+Create 3 master dots.
+
+green  #22c55e
+blue   #3b82f6
+red    #ef4444
+
+Dots must move smoothly between anchor elements using GSAP.
+
+Movement must be curved and fluid (bezier path), never teleport.
+
+------------------------------------------------
+
+INITIAL HERO STATE
+
+In the hero section there is a particle sphere anchored at:
+
+#hero-sphere-anchor
+
+Render a particle sphere made of ~80 particles.
+
+The three dots are initially hidden inside the sphere.
+
+When scrolling begins, the sphere releases the 3 colored dots.
+
+------------------------------------------------
+
+SECTION BEHAVIOUR
+
+1. PROCESS
+
+Dots attach to:
+
+#process-dot-1
+#process-dot-2
+#process-dot-3
+
+Green → first
+Blue → second
+Red → third
+
+Dots lock onto the animated bullet positions.
+
+------------------------------------------------
+
+2. SERVICES
+
+Dots move to:
+
+#services-dot-1
+#services-dot-2
+#services-dot-3
+
+Each dot attaches to its corresponding card.
+
+------------------------------------------------
+
+3. WHY
+
+Dots move to:
+
+#why-dot-1
+#why-dot-2
+#why-dot-3
+
+Attach to bullet markers.
+
+------------------------------------------------
+
+4. CLIENTS
+
+Move dots to the divider center:
+
+#clients-divider-center
+
+Arrange them horizontally:
+
+green  blue  red
+
+------------------------------------------------
+
+5. PARTNERS
+
+Same behaviour.
+
+Target:
+
+#partners-divider-center
+
+------------------------------------------------
+
+6. CTA
+
+Target:
+
+#cta-dot-merge
+
+All three dots converge and merge into one point.
+
+Fade out and disappear.
+
+------------------------------------------------
+
+SCROLL REVERSAL
+
+Scrolling upward reverses the entire animation path.
+
+CTA → Partners → Clients → Why → Services → Process → Hero.
+
+------------------------------------------------
+
+TECH IMPLEMENTATION
+
+Use:
+
+GSAP
+ScrollTrigger
+
+StoryCanvas should:
+
+• run as a fixed overlay
+• track anchor positions via getBoundingClientRect
+• animate dot positions using GSAP timelines
+• support resize recalculation
+
+------------------------------------------------
+
+OUTPUT
+
+Return a complete StoryCanvas React component.
+
+It must include:
+
+particle sphere system
+dot movement system
+scroll triggers
+anchor tracking
+responsive updates

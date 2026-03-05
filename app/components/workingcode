@@ -1,0 +1,1089 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import gsap, { ScrollTrigger } from "../../lib/gsap";
+
+export default function StoryCanvas() {
+
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+
+
+        const canvas: any = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx: any = canvas.getContext("2d");
+        if (!ctx) return;
+
+
+        /* ------------------ */
+        /* CONFIG */
+        /* ------------------ */
+
+        const FOLLOW_SPEED = 0.08;
+
+        let orbitAngle = 0;
+
+        let currentMode = "normal";
+
+        let heroSphereActive = true;
+        let heroSphereProgress = 0;
+
+        const SPHERE_RADIUS = 180;
+        const SPHERE_POINTS = 120;
+
+        const sphere: any[] = [];
+
+        for (let i = 0; i < SPHERE_POINTS; i++) {
+
+            const phi = Math.acos(-1 + (2 * i) / SPHERE_POINTS);
+            const theta = Math.sqrt(SPHERE_POINTS * Math.PI) * phi;
+
+            sphere.push({
+                theta,
+                phi,
+                x: 0,
+                y: 0,
+                scale: 1
+            });
+
+        }
+
+
+        /* ------------------ */
+        /* RESIZE */
+        /* ------------------ */
+
+        function resize() {
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+        }
+
+        resize();
+
+        window.addEventListener("resize", resize);
+
+
+        /* ------------------ */
+        /* MASTER DOTS */
+        /* ------------------ */
+
+        const MASTER_DOTS: any[] = [
+
+            {
+                baseColor: "#22c55e",
+                color: "#22c55e",
+                x: canvas.width * 0.75,
+                y: canvas.height * 0.75,
+                target: null,
+                offsetX: 0,
+                offsetY: 0,
+                visible: false
+            },
+
+            {
+                baseColor: "#3b82f6",
+                color: "#3b82f6",
+                x: canvas.width * 0.75,
+                y: canvas.height * 0.75,
+                target: null,
+                offsetX: 0,
+                offsetY: 0,
+                visible: false
+            },
+
+            {
+                baseColor: "#ef4444",
+                color: "#ef4444",
+                x: canvas.width * 0.75,
+                y: canvas.height * 0.75,
+                target: null,
+                offsetX: 0,
+                offsetY: 0,
+                visible: false
+            }
+
+        ];
+
+
+
+        function clearTargets() {
+
+            currentMode = "normal";
+
+            MASTER_DOTS.forEach(dot => {
+
+                dot.target = null;
+                dot.offsetX = 0;
+                dot.offsetY = 0;
+                dot.color = dot.baseColor;
+
+            });
+
+        }
+
+        // emergence array
+
+        const emergenceParticles: any[] = [];
+
+        const EMERGENCE_COUNT = 40;
+
+        for (let i = 0; i < EMERGENCE_COUNT; i++) {
+
+            emergenceParticles.push({
+
+                x: 0,
+                y: 0,
+
+                targetX: 0,
+                targetY: 0,
+
+                opacity: 0,
+
+                size: 2,
+
+                active: false
+
+            });
+
+        }
+
+        /* ------------------ */
+        /* PARTICLES */
+        /* ------------------ */
+
+        const particles: any[] = [];
+
+        for (let i = 0; i < 60; i++) {
+
+            particles.push({
+
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+
+                group: i % 3,
+
+                size: 2,
+                scale: 0.5 + Math.random()
+
+            });
+
+        }
+
+
+        /* ------------------ */
+        /* SECTION MOVEMENTS */
+        /* ------------------ */
+
+        function moveToProcess() {
+
+            clearTargets();
+
+            const el = document.getElementById("process");
+            if (!el) return;
+
+            MASTER_DOTS.forEach(dot => {
+
+                dot.target = el;
+
+            });
+
+        }
+
+
+        function moveToServices() {
+
+            clearTargets();
+
+            MASTER_DOTS.forEach((dot, i) => {
+
+                dot.target =
+                    document.getElementById(
+                        "service-icon-" + (i + 1)
+                    );
+
+            });
+
+        }
+
+
+        function moveToWhyBullets() {
+
+            clearTargets();
+
+            MASTER_DOTS.forEach((dot, i) => {
+
+                dot.target =
+                    document.getElementById(
+                        "why-point-" + (i + 1)
+                    );
+
+            });
+
+        }
+
+
+        function moveToWhySpine() {
+
+            clearTargets();
+
+            const spine =
+                document.getElementById(
+                    "timeline-spine"
+                );
+
+            MASTER_DOTS.forEach((dot, i) => {
+
+                dot.target = spine;
+                dot.offsetY = (i - 1) * 120;
+
+            });
+
+        }
+
+
+        function moveToClients() {
+
+            clearTargets();
+
+            const logos =
+                document.querySelectorAll(
+                    ".client-logo"
+                );
+
+            MASTER_DOTS.forEach((dot, i) => {
+
+                dot.target =
+                    logos[i * 2];
+
+            });
+
+        }
+
+
+        function moveToPartners() {
+
+            clearTargets();
+
+            const anchor =
+                document.getElementById(
+                    "partners-anchor"
+                );
+
+            MASTER_DOTS.forEach((dot, i) => {
+
+                dot.target = anchor;
+
+                dot.offsetX = (i - 1) * 140;
+                dot.offsetY = 80;
+
+            });
+
+        }
+
+
+        function moveToCTA() {
+            console.log("CTA ACTIVATED");
+            clearTargets();
+
+            currentMode = "orbit";
+
+            MASTER_DOTS.forEach(dot => {
+
+                dot.color = "#ffffff";
+
+            });
+
+        }
+
+
+        /* ------------------ */
+        /* HERO MERGE */
+        /* ------------------ */
+
+        ScrollTrigger.create({
+
+            trigger: "#hero",
+
+            start: "top top",
+
+            end: "bottom top",
+
+            scrub: true,
+
+            onUpdate: self => {
+
+                heroSphereProgress = self.progress;
+
+            },
+
+            onLeave: () => {
+                heroSphereActive = false;
+            },
+
+            onEnterBack: () => {
+                heroSphereActive = true;
+            },
+
+
+        });
+
+        /* ------------------ */
+        /* TRIGGERS */
+        /* ------------------ */
+
+        function bind(id: any, enter: any, leaveBack: any) {
+
+            ScrollTrigger.create({
+
+                trigger: id,
+                start: "top center",
+
+                onEnter: enter,
+                onEnterBack: enter,
+
+                onLeaveBack: leaveBack
+
+            });
+
+        }
+
+
+        bind("#process", moveToProcess, () => { });
+        bind("#services", moveToServices, moveToProcess);
+        bind("#why", moveToWhyBullets, moveToServices);
+
+        ScrollTrigger.create({
+
+            trigger: "#why",
+            start: "center center",
+
+            onEnter: moveToWhySpine,
+            onEnterBack: moveToWhySpine,
+
+            onLeaveBack: moveToWhyBullets
+
+        });
+
+        bind("#clients", moveToClients, moveToWhyBullets);
+        bind("#partners", moveToPartners, moveToClients);
+
+        ScrollTrigger.create({
+
+            trigger: "#cta",
+
+            start: "top center",
+
+            onEnter: moveToCTA,
+            onEnterBack: moveToCTA,
+
+            onLeaveBack: moveToPartners
+
+        });
+
+        /* ------------------ */
+        /* FOLLOW TARGET */
+        /* ------------------ */
+
+        function follow(dot: any) {
+
+            if (!dot.target) return;
+
+            const rect =
+                dot.target.getBoundingClientRect();
+
+            const tx =
+                rect.left +
+                rect.width / 2 +
+                dot.offsetX;
+
+            const ty =
+                rect.top +
+                rect.height / 2 +
+                dot.offsetY;
+
+            dot.x += (tx - dot.x) * FOLLOW_SPEED;
+            dot.y += (ty - dot.y) * FOLLOW_SPEED;
+
+        }
+
+
+        /* ------------------ */
+        /* RENDER */
+        /* ------------------ */
+
+        function render() {
+
+            ctx.clearRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            /* HERO SPHERE */
+
+            if (heroSphereActive) {
+
+                const cx = canvas.width * 0.75;
+                const heroEl = document.getElementById("hero");
+
+                let cy = canvas.height * 0.35;
+
+                if (heroEl) {
+
+                    const rect = heroEl.getBoundingClientRect();
+
+                    cy = rect.top + rect.height * 0.35;
+
+                }
+                const time = performance.now() * 0.0004;
+
+                sphere.forEach(p => {
+
+                    const x =
+                        SPHERE_RADIUS *
+                        Math.cos(p.theta + time) *
+                        Math.sin(p.phi);
+
+                    const y =
+                        SPHERE_RADIUS *
+                        Math.sin(p.theta + time) *
+                        Math.sin(p.phi);
+
+                    const z =
+                        SPHERE_RADIUS *
+                        Math.cos(p.phi);
+
+                    const scale =
+                        900 / (900 - z);
+
+                    p.x = cx + x * scale;
+                    p.y = cy + y * scale;
+                    p.scale = scale;
+
+                    ctx.beginPath();
+
+                    ctx.arc(
+                        p.x,
+                        p.y,
+                        2 * scale,
+                        0,
+                        Math.PI * 2
+                    );
+
+                    ctx.fillStyle =
+                        `rgba(0,0,0,${0.15 + scale * 0.5})`;
+
+                    ctx.fill();
+
+                });
+
+            }
+
+            /* ORBIT MODE */
+
+            if (currentMode === "orbit") {
+
+                const btn =
+                    document.getElementById(
+                        "cta-button"
+                    );
+
+                if (btn) {
+
+                    const rect =
+                        btn.getBoundingClientRect();
+
+                    const cx =
+                        rect.left + rect.width / 2;
+
+                    const cy =
+                        rect.top + rect.height / 2;
+
+                    orbitAngle += 0.02;
+
+                    MASTER_DOTS.forEach((dot, i) => {
+
+                        const radius =
+                            80 + i * 20;
+
+                        const tx =
+                            cx +
+                            Math.cos(
+                                orbitAngle + i
+                            ) *
+                            radius;
+
+                        const ty =
+                            cy +
+                            Math.sin(
+                                orbitAngle + i
+                            ) *
+                            radius;
+
+                        dot.x +=
+                            (tx - dot.x) *
+                            FOLLOW_SPEED;
+
+                        dot.y +=
+                            (ty - dot.y) *
+                            FOLLOW_SPEED;
+
+                    });
+
+                }
+
+            }
+
+            else {
+
+                /* HERO EMERGENCE CONTROL */
+
+                if (heroSphereProgress < 0.6) {
+
+                    const cx = canvas.width * 0.75;
+                    const heroEl = document.getElementById("hero");
+
+                    let cy = canvas.height * 0.35;
+
+                    if (heroEl) {
+                        const rect = heroEl.getBoundingClientRect();
+                        cy = rect.top + canvas.height * 0.35;
+                    }
+
+                    MASTER_DOTS.forEach((dot, i) => {
+
+                        const start = 0.15;
+                        const end = 0.5;
+
+                        let p =
+                            (heroSphereProgress - start) /
+                            (end - start);
+
+                        p = Math.max(0, Math.min(1, p));
+
+                        dot.visible = p > 0;
+
+                        /* PHASE 1 — scatter slightly */
+                        const scatterRadius = 60;
+
+                        const angle = (i / 3) * Math.PI * 2;
+
+                        const scatterX =
+                            cx + Math.cos(angle) * scatterRadius;
+
+                        const scatterY =
+                            cy + Math.sin(angle) * scatterRadius;
+
+                        /* PHASE 2 — horizontal alignment */
+
+                        const horizontalSpacing = 70;
+
+                        const finalX =
+                            cx +
+                            (i - 1) * horizontalSpacing;
+
+                        const finalY =
+                            cy + 140;
+
+                        if (p < 0.5) {
+
+                            const t = p / 0.5;
+
+                            dot.x =
+                                cx + (scatterX - cx) * t;
+
+                            dot.y =
+                                cy + (scatterY - cy) * t;
+
+                        } else {
+
+                            const t = (p - 0.5) / 0.5;
+
+                            dot.x =
+                                scatterX +
+                                (finalX - scatterX) * t;
+
+                            dot.y =
+                                scatterY +
+                                (finalY - scatterY) * t;
+
+                        }
+
+                    });
+
+                }
+
+                else {
+
+                    MASTER_DOTS.forEach(follow);
+
+                }
+
+            }
+
+            /* PARTICLES */
+
+            particles.forEach(p => {
+
+                const dot = MASTER_DOTS[p.group];
+
+                /* hide particles if master dot hidden */
+
+                if (!dot.visible) return;
+
+                p.x += (dot.x - p.x) * FOLLOW_SPEED;
+                p.y += (dot.y - p.y) * FOLLOW_SPEED;
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    p.x,
+                    p.y,
+                    p.size * p.scale,
+                    0,
+                    Math.PI * 2
+                );
+
+                ctx.fillStyle = dot.color;
+
+                ctx.fill();
+
+            });
+
+
+            /* MASTER DOTS */
+
+            MASTER_DOTS.forEach(dot => {
+
+                if (!dot.visible) return;
+
+                ctx.beginPath();
+
+                ctx.arc(dot.x, dot.y, 10, 0, Math.PI * 2);
+
+                ctx.fillStyle = dot.color;
+
+                ctx.shadowColor = dot.color;
+
+                ctx.shadowBlur = 20;
+
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+
+            });
+
+            requestAnimationFrame(render);
+
+        }
+
+        render();
+
+
+        return () => {
+
+            window.removeEventListener(
+                "resize",
+                resize
+            );
+
+            ScrollTrigger
+                .getAll()
+                .forEach(t => t.kill());
+
+        };
+
+
+    }, []);
+
+    return (
+
+
+        <canvas
+
+            ref= { canvasRef }
+
+    style = {{
+
+        position: "fixed",
+            top: 0,
+                left: 0,
+
+                    width: "100%",
+                        height: "100%",
+
+                            zIndex: 30,
+                                pointerEvents: "none"
+
+    }
+}
+
+        />
+
+
+    );
+
+}
+
+// new
+
+"use client";
+
+import { useEffect, useRef } from "react";
+import gsap, { ScrollTrigger } from "../../lib/gsap";
+
+export default function StoryCanvas() {
+
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        const canvas = canvasRef.current!;
+        const ctx = canvas.getContext("2d")!;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        resize();
+        window.addEventListener("resize", resize);
+
+        /* ========================= */
+        /* GLOBAL SCROLL ENGINE */
+        /* ========================= */
+
+        let globalProgress = 0;
+
+        ScrollTrigger.create({
+            trigger: document.body,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: true,
+            onUpdate: self => {
+                globalProgress = self.progress;
+            }
+        });
+
+        /* ========================= */
+        /* SECTION MAPPING */
+        /* ========================= */
+
+        const ranges = {
+            HERO: [0.0, 0.25],
+            PROCESS: [0.25, 0.45],
+            SERVICES: [0.45, 0.65],
+            CTA: [0.65, 1.0]
+        };
+
+        function normalize(progress: number, start: number, end: number) {
+            return Math.min(
+                Math.max((progress - start) / (end - start), 0),
+                1
+            );
+        }
+
+        /* ========================= */
+        /* DOTS */
+        /* ========================= */
+
+        interface Dot {
+            x: number;
+            y: number;
+        }
+
+        const dots: Dot[] = [
+            { x: canvas.width * 0.75, y: canvas.height * 0.3 },
+            { x: canvas.width * 0.75, y: canvas.height * 0.3 },
+            { x: canvas.width * 0.75, y: canvas.height * 0.3 }
+        ];
+
+        const EMERGENCE_START = 0.15;
+        const EMERGENCE_END = 0.30;
+        const PARTICLE_COUNT = 90;
+
+        const emergenceParticles = Array.from({ length: PARTICLE_COUNT }).map((_, i) => ({
+            group: i % 3,
+            seed: i
+        }));
+        /* ========================= */
+        /* TARGET COMPUTATION */
+        /* ========================= */
+
+        function computeTargets() {
+
+            const p = globalProgress;
+
+            const keyframes = [
+                // 0.00 — HERO SPHERE CENTER (dots hidden inside sphere)
+                {
+                    at: 0.0,
+                    getLayout: () => dots.map(() => ({
+                        x: canvas.width * 0.75,
+                        y: canvas.height * 0.3
+                    }))
+                },
+
+                // 0.15 — DOTS EMERGE AROUND SPHERE
+                {
+                    at: 0.15,
+                    getLayout: () => {
+                        const cx = canvas.width * 0.75;
+                        const cy = canvas.height * 0.3;
+
+                        return dots.map((_, i) => {
+                            const angle = (i / 3) * Math.PI * 2;
+                            return {
+                                x: cx + Math.cos(angle) * 60,
+                                y: cy + Math.sin(angle) * 60
+                            };
+                        });
+                    }
+                },
+
+                // 0.30 — MERGE INTO PROCESS CENTER
+                {
+                    at: 0.30,
+                    getLayout: () => dots.map(() => ({
+                        x: canvas.width * 0.5,
+                        y: canvas.height * 0.5
+                    }))
+                },
+
+                // 0.55 — SERVICES SPREAD
+                {
+                    at: 0.55,
+                    getLayout: () => dots.map((_, i) => ({
+                        x: canvas.width * 0.4 + i * 120,
+                        y: canvas.height * 0.6
+                    }))
+                },
+
+                // 0.75 — CENTER CLUSTER (WHY / CLIENTS placeholder)
+                {
+                    at: 0.75,
+                    getLayout: () => dots.map(() => ({
+                        x: canvas.width * 0.5,
+                        y: canvas.height * 0.5
+                    }))
+                },
+
+                // 1.00 — CTA ORBIT
+                {
+                    at: 1.0,
+                    getLayout: () => {
+                        const centerX = canvas.width * 0.5;
+                        const centerY = canvas.height * 0.5;
+
+                        return dots.map((_, i) => {
+                            const angle =
+                                (globalProgress - 0.75) / (1 - 0.75) * Math.PI * 4 +
+                                i * (Math.PI * 2 / dots.length);
+
+                            const radius = 80 + i * 20;
+
+                            return {
+                                x: centerX + Math.cos(angle) * radius,
+                                y: centerY + Math.sin(angle) * radius
+                            };
+                        });
+                    }
+                }
+            ];
+
+            // Find surrounding keyframes
+            let k1 = keyframes[0];
+            let k2 = keyframes[keyframes.length - 1];
+
+            for (let i = 0; i < keyframes.length - 1; i++) {
+                if (p >= keyframes[i].at && p <= keyframes[i + 1].at) {
+                    k1 = keyframes[i];
+                    k2 = keyframes[i + 1];
+                    break;
+                }
+            }
+
+            const span = k2.at - k1.at;
+            const t = span === 0 ? 0 : (p - k1.at) / span;
+
+            const layout1 = k1.getLayout();
+            const layout2 = k2.getLayout();
+
+            return layout1.map((pos1, i) => ({
+                x: pos1.x + (layout2[i].x - pos1.x) * t,
+                y: pos1.y + (layout2[i].y - pos1.y) * t
+            }));
+        }
+
+        /* ========================= */
+        /* RENDER LOOP */
+        /* ========================= */
+
+        let lastProgress = 0;
+
+        function render() {
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const targets = computeTargets();
+
+            const progressDelta = Math.abs(globalProgress - lastProgress);
+            lastProgress = globalProgress;
+
+            const sphereStart = 0.0;
+            const sphereEnd = 0.20;
+
+            if (globalProgress < sphereEnd) {
+
+                const t = Math.min(globalProgress / 0.15, 1);
+
+                const fadeT = Math.max(
+                    1 - (globalProgress - 0.15) / 0.05,
+                    0
+                );
+
+                const cx = canvas.width * 0.75;
+                const cy = canvas.height * 0.3;
+
+                const radius = 180;
+                const points = 120;
+
+                for (let i = 0; i < points; i++) {
+
+                    const phi = Math.acos(-1 + (2 * i) / points);
+                    const theta = Math.sqrt(points * Math.PI) * phi;
+
+                    const angle = t * Math.PI * 4;
+
+                    const x =
+                        radius *
+                        Math.cos(theta + angle) *
+                        Math.sin(phi);
+
+                    const y =
+                        radius *
+                        Math.sin(theta + angle) *
+                        Math.sin(phi);
+
+                    const z =
+                        radius *
+                        Math.cos(phi);
+
+                    const scale =
+                        900 / (900 - z);
+
+                    ctx.beginPath();
+                    ctx.arc(
+                        cx + x * scale,
+                        cy + y * scale,
+                        2 * scale,
+                        0,
+                        Math.PI * 2
+                    );
+
+                    ctx.fillStyle =
+                        `rgba(0,0,0,${(0.2 + scale * 0.5) * fadeT})`;
+
+                    ctx.fill();
+                }
+            }
+
+            if (globalProgress >= EMERGENCE_START && globalProgress <= EMERGENCE_END) {
+
+                const t =
+                    (globalProgress - EMERGENCE_START) /
+                    (EMERGENCE_END - EMERGENCE_START);
+
+                const cx = canvas.width * 0.75;
+                const cy = canvas.height * 0.3;
+
+                const processCenter = {
+                    x: canvas.width * 0.5,
+                    y: canvas.height * 0.5
+                };
+
+                emergenceParticles.forEach((p: any) => {
+
+                    const angle = (p.seed / PARTICLE_COUNT) * Math.PI * 6;
+                    const radius = 120;
+
+                    const startX =
+                        cx + Math.cos(angle) * radius;
+                    const startY =
+                        cy + Math.sin(angle) * radius;
+
+                    const targetAngle =
+                        (p.group / 3) * Math.PI * 2;
+
+                    const targetX =
+                        processCenter.x +
+                        Math.cos(targetAngle) * 10;
+
+                    const targetY =
+                        processCenter.y +
+                        Math.sin(targetAngle) * 10;
+
+                    const x =
+                        startX +
+                        (targetX - startX) * t;
+
+                    const y =
+                        startY +
+                        (targetY - startY) * t;
+
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2, 0, Math.PI * 2);
+
+                    ctx.fillStyle =
+                        `rgba(0,0,0,${1 - t})`;
+
+                    ctx.fill();
+                });
+            }
+
+            dots.forEach((dot, i) => {
+
+                const tx = targets[i].x;
+                const ty = targets[i].y;
+
+                dot.x = tx;
+                dot.y = ty;
+
+                ctx.beginPath();
+                ctx.arc(dot.x, dot.y, 10, 0, Math.PI * 2);
+                ctx.fillStyle = ["#22c55e", "#3b82f6", "#ef4444"][i];
+                ctx.fill();
+            });
+
+            requestAnimationFrame(render);
+        }
+
+        render();
+
+        return () => {
+            ScrollTrigger.getAll().forEach(t => t.kill());
+            window.removeEventListener("resize", resize);
+        };
+
+    }, []);
+
+    return (
+        <canvas
+            ref= { canvasRef }
+    style = {{
+        position: "fixed",
+            inset: 0,
+                pointerEvents: "none",
+                    zIndex: 30
+    }
+}
+        />
+    );
+}
