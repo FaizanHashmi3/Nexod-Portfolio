@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import gsap from "@/lib/gsap";
 import { ScrollTrigger } from "@/lib/gsap";
+import Header from "../Header";
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif";
 
@@ -216,7 +217,13 @@ export default function ServicesPage() {
 
     return (
         <main style={{ fontFamily: FONT, background: "#fff", color: "#0a0a0a", minHeight: "100vh", overflowX: "hidden" }}>
-            <PageHeader />
+            {/* <PageHeader /> */}
+            <div
+            style={{ padding: "0px 94px" }}  
+            >
+
+            <Header />
+            </div>
 
             {/* ════════════════════════════════════════════════════════
                 HERO
@@ -254,7 +261,7 @@ export default function ServicesPage() {
                                     <path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             </a>
-                           
+
                         </div>
                     </div>
                 </div>
