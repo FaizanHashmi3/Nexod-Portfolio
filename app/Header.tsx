@@ -1,15 +1,39 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+const NAV_LINKS: { label: string; href: string }[] = [
+    { label: "Services", href: "#services-section" },
+    { label: "Why Us", href: "#why-section" },
+    { label: "Clients", href: "#clients-section" },
+    { label: "Partners", href: "#partners-section" },
+];
 
 export default function Header() {
     const [scrolled, setScrolled] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         const handle = () => setScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handle);
         return () => window.removeEventListener("scroll", handle);
     }, []);
+
+    const handleNav = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+        e.preventDefault();
+        if (href === "#") return;
+
+        // If not on home page, go home first then scroll
+        if (window.location.pathname !== "/") {
+            router.push("/" + href);
+            return;
+        }
+
+        const target = document.querySelector(href);
+        if (!target) return;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
 
     return (
         <div className="fixed top-5 w-[85%] z-[99999] flex justify-center">
@@ -28,7 +52,10 @@ export default function Header() {
                 <div className="flex items-center justify-between px-10 py-4">
 
                     {/* Logo */}
-                    <div className="flex items-center gap-3 font-semibold text-lg tracking-tight">
+                    <div
+                        className="flex items-center gap-3 font-semibold text-lg tracking-tight cursor-pointer"
+                        onClick={() => router.push("/")}
+                    >
                         <div className="w-9 h-9 rounded-full border-2 border-black flex items-center justify-center">
                             N
                         </div>
@@ -37,16 +64,24 @@ export default function Header() {
 
                     {/* Nav */}
                     <nav className="hidden md:flex items-center gap-10 text-sm font-medium">
-                        {["Work", "Services", "Clients", "About", "Knowledge"].map((item) => (
-                            <a key={item} href="#" className="relative group">
-                                {item}
+                        {NAV_LINKS.map(({ label, href }) => (
+                            <a
+                                key={label}
+                                href={href}
+                                onClick={(e) => handleNav(e, href)}
+                                className="relative group"
+                            >
+                                {label}
                                 <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-black transition-all duration-300 group-hover:w-full" />
                             </a>
                         ))}
                     </nav>
 
-                    {/* CTA */}
-                    <button className="px-8 py-3 bg-black text-white rounded-full text-sm font-medium hover:scale-105 transition-all duration-300">
+                    {/* CTA → /contact */}
+                    <button
+                        onClick={() => router.push("/contact")}
+                        className="px-8 py-3 bg-black text-white rounded-full text-sm font-medium hover:scale-105 transition-all duration-300"
+                    >
                         Contact
                     </button>
 

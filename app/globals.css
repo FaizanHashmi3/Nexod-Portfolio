@@ -43,7 +43,7 @@
 }
 
 body {
-  background: #0a0a0a;
+  /* background: #0a0a0a; */
   color: #ffffff;
   font-family: var(--font-geist-sans);
   -webkit-font-smoothing: antialiased;
