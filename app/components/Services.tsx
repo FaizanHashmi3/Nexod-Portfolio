@@ -77,7 +77,7 @@ const CARDS: CardData[] = [
     {
         color: "#9c34f0",
         number: "02",
-        title: "AI Marketing",
+        title: "Marketing",
         subtitle: "Data-driven strategies that deliver results",
         description:
             "Leverage AI to supercharge your marketing efforts. From audience targeting to content optimisation, we drive measurable growth — averaging a 3x ROI increase across client campaigns.",
@@ -117,50 +117,7 @@ const CARDS: CardData[] = [
             },
         ],
     },
-    {
-        color: "#fb5457",
-        number: "03",
-        title: "AI Automation",
-        subtitle: "Streamline operations at every layer",
-        description:
-            "Robust automation infrastructure that eliminates manual overhead, integrates seamlessly into your existing stack, and lets your team operate at maximum leverage — consistently.",
-        icon: (
-            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
-                <path d="M6 38l10-12 8 6 10-14 8-10" stroke="currentColor" strokeWidth="2.5"
-                    strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="42" cy="8" r="4" fill="currentColor" />
-                <path d="M6 42h36" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                <path d="M34 20l8-12-8 2-2-8" stroke="currentColor" strokeWidth="2"
-                    strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-        ),
-        features: [
-            {
-                label: "End-to-end workflow automation",
-                icon: <FIcon><rect x="2" y="6" width="5" height="8" rx="1" stroke="currentColor" strokeWidth="1.5" /><rect x="13" y="6" width="5" height="8" rx="1" stroke="currentColor" strokeWidth="1.5" /><path d="M7 10h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 1.5" /></FIcon>,
-            },
-            {
-                label: "API & third-party integrations",
-                icon: <FIcon><path d="M2 10h4l2-4 2 8 2-4h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></FIcon>,
-            },
-            {
-                label: "Intelligent document processing",
-                icon: <FIcon><rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" /><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></FIcon>,
-            },
-            {
-                label: "Real-time data pipelines",
-                icon: <FIcon><path d="M2 10h16M2 7l3-4M2 13l3 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></FIcon>,
-            },
-            {
-                label: "Automated reporting & alerts",
-                icon: <FIcon><path d="M10 2v3M5.5 4.5l2 2M14.5 4.5l-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M4 14h12c0-4-2.7-7-6-7S4 10 4 14z" stroke="currentColor" strokeWidth="1.5" /><path d="M7 14v1a3 3 0 006 0v-1" stroke="currentColor" strokeWidth="1.5" /></FIcon>,
-            },
-            {
-                label: "Scalable no-code infrastructure",
-                icon: <FIcon><rect x="2" y="2" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5" /><rect x="11" y="2" width="7" height="7" rx="1" stroke="currentColor" strokeWidth="1.5" /><rect x="6" y="11" width="8" height="7" rx="1" stroke="currentColor" strokeWidth="1.5" /><path d="M5.5 9v1a3 3 0 003 3h3a3 3 0 003-3V9" stroke="currentColor" strokeWidth="1.5" /></FIcon>,
-            },
-        ],
-    },
+    
 ];
 
 export default function Services() {
@@ -303,7 +260,7 @@ export default function Services() {
                     marginBottom: "72px",
                 }} />
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
                     {CARDS.map((card, i) => {
                         const isHovered = hoveredIdx === i;
                         const cardStyle: CSSProperties = {
